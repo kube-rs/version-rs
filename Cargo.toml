@@ -10,15 +10,15 @@ name = "version"
 path = "version.rs"
 
 [dependencies]
-actix-web = "2.0.0-alpha.3"
-actix-rt = "1.0.0-alpha.3"
+actix-web = "2.0.0"
+actix-rt = "1.0.0"
 #actix-web-prom = "0.1.2"
-kube = { git = "https://github.com/clux/kube-rs", features = ["openapi"], rev = "f375ca38a82146c4616d8a162879c46fec60d420" }
-#kube = { version = "0.23.0", features = ["openapi"] }
-k8s-openapi = { version = "0.6.0", features = ["v1_15"] }
+#kube = { git = "https://github.com/clux/kube-rs", features = ["openapi"], rev = "f375ca38a82146c4616d8a162879c46fec60d420" }
+kube = { version = "0.24.0", features = ["openapi"] }
+k8s-openapi = { version = "0.7.1", features = ["v1_15"] }
 serde = "1.0.97"
 serde_derive = "1.0.97"
 log = "0.4.7"
 env_logger = "0.7.1"
-tokio = "0.2.4"
+tokio = "0.2.11"
 anyhow = "1.0.25"
