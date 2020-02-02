@@ -112,6 +112,6 @@ async fn main() -> std::io::Result<()> {
         })
         .bind("0.0.0.0:8000").expect("Can not bind to 0.0.0.0:8000")
         .shutdown_timeout(0)
-        .start()
+        .run()
         .await
 }
