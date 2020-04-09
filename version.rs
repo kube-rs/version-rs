@@ -1,5 +1,4 @@
 use actix_web::{get, middleware, web, web::Data, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use futures::{future::FutureExt, pin_mut, select};
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
     api::{Api, Meta},
@@ -64,7 +63,7 @@ async fn health(_: HttpRequest) -> impl Responder {
 }
 
 #[actix_rt::main]
-async fn main() -> std::io::Result<()> {
+async fn main() {
     env::set_var("RUST_LOG", "info,kube=debug");
     env_logger::init();
     let client = Client::try_default().await.expect("create client");
@@ -73,7 +72,7 @@ async fn main() -> std::io::Result<()> {
     let rf = Reflector::new(api);
 
     let rf2 = rf.clone(); // clone for actix
-    let server_fut = HttpServer::new(move || {
+    let server = HttpServer::new(move || {
             App::new()
                 .data(rf2.clone())
                 .wrap(middleware::Logger::default()) //.exclude("/health"))
@@ -83,15 +82,8 @@ async fn main() -> std::io::Result<()> {
             })
         .bind("0.0.0.0:8000")
         .expect("bind to 0.0.0.0:8000")
-        .shutdown_timeout(5)
-        .run()
-        .fuse();
-    let reflector_fut = rf.run().fuse();
+        .shutdown_timeout(5);
 
     // Ensure both runtimes are alive
-    pin_mut!(server_fut, reflector_fut);
-    select! {
-        server_res = server_fut => { server_res }
-        reflector_res = reflector_fut => { Ok(reflector_res.unwrap()) }
-    }
+    let _res = futures::join!(server.run(), rf.run());
 }
