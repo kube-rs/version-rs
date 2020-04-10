@@ -11,7 +11,7 @@ version: version.rs
 	sudo chown $$USER:$$USER -R target
 	mv target/x86_64-unknown-linux-musl/release/version .
 
-build: version
+build:
 	docker build -t $(REPO)/$(NAME):$(VERSION) .
 
 run:
