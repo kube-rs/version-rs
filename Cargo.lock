@@ -941,8 +941,8 @@ dependencies = [
 
 [[package]]
 name = "kube"
-version = "0.31.0"
-source = "git+https://github.com/clux/kube-rs?rev=ab4728a199ec1f61c2968417fa1d6699a0e0d03a#ab4728a199ec1f61c2968417fa1d6699a0e0d03a"
+version = "0.32.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "Inflector 0.11.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1937,7 +1937,7 @@ dependencies = [
  "env_logger 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "k8s-openapi 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "kube 0.31.0 (git+https://github.com/clux/kube-rs?rev=ab4728a199ec1f61c2968417fa1d6699a0e0d03a)",
+ "kube 0.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.106 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -2233,7 +2233,7 @@ dependencies = [
 "checksum js-sys 0.3.32 (registry+https://github.com/rust-lang/crates.io-index)" = "1c840fdb2167497b0bd0db43d6dfe61e91637fa72f9d061f8bd17ddc44ba6414"
 "checksum k8s-openapi 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)" = "96affb18356fc998baa692c2185d198095ffdf6e6fff3bc9efb4927952f86851"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
-"checksum kube 0.31.0 (git+https://github.com/clux/kube-rs?rev=ab4728a199ec1f61c2968417fa1d6699a0e0d03a)" = "<none>"
+"checksum kube 0.32.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1283180f679ea37dbd6b0cdf9b915164343b3de91b57bc42afb2471023aa897f"
 "checksum language-tags 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "a91d884b6667cd606bb5a69aa0c99ba811a115fc68915e7056ec08a46e93199a"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 "checksum libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)" = "d515b1f41455adea1313a4a2ac8a8a477634fbae63cc6100e3aebb207ce61558"
