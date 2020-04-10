@@ -1,7 +1,7 @@
 # version-rs
 [![CircleCI](https://circleci.com/gh/clux/version-rs/tree/master.svg?style=shield)](https://circleci.com/gh/clux/version-rs/tree/master)
 [![docker pulls](https://img.shields.io/docker/pulls/clux/version.svg)](
-https://hub.docker.com/r/clux/controller/)
+https://hub.docker.com/r/clux/version/)
 [![docker image info](https://images.microbadger.com/badges/image/clux/version.svg)](http://microbadger.com/images/clux/version)
 [![docker tag](https://images.microbadger.com/badges/version/clux/version.svg)](https://hub.docker.com/r/clux/version/tags/)
 

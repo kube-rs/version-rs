@@ -17,15 +17,15 @@ build: version
 run:
 	NAMESPACE=dev RUST_LOG=info cargo run
 
-tag-latest: build
+tag-latest:
 	docker tag $(REPO)/$(NAME):$(VERSION) $(REPO)/$(NAME):latest
 	docker push $(REPO)/$(NAME):latest
 
-tag-version: build
+tag-version:
 	docker push $(REPO)/$(NAME):$(VERSION)
 	docker tag  $(REPO)/$(NAME):$(VERSION) $(REPO)/$(NAME):$(VERSION)
 
-tag-semver: build
+tag-semver:
 	if curl -sSL https://registry.hub.docker.com/v1/repositories/$(REPO)/$(NAME)/tags | jq -r ".[].name" | grep -q $(SEMVER_VERSION); then \
 		echo "Tag $(SEMVER_VERSION) already exists - not publishing" ; \
 	else \
