@@ -1,6 +1,6 @@
 [package]
 name = "version"
-version = "1.1.0"
+version = "1.2.0"
 authors = ["Eirik Albrigtsen <sszynrae@gmail.com>"]
 edition = "2018"
 
@@ -12,11 +12,12 @@ path = "version.rs"
 [dependencies]
 actix-web = "2.0.0"
 actix-rt = "1.1.0"
-kube = { git = "https://github.com/clux/kube-rs", rev = "ab4728a199ec1f61c2968417fa1d6699a0e0d03a" }
-#kube = { version = "0.32.0" }
-k8s-openapi = { version = "0.7.1", features = ["v1_15"], default-features=false }
+#kube = { git = "https://github.com/clux/kube-rs", rev = "ab4728a199ec1f61c2968417fa1d6699a0e0d03a" }
+kube = { version = "0.32.0" }
+k8s-openapi = { version = "0.7.1", features = ["v1_17"], default-features=false }
 serde = { version = "1.0.106", features = ["derive"] }
 log = "0.4.7"
 env_logger = "0.7.1"
 anyhow = "1.0.26"
 futures = "0.3.4"
+actix-web-prom = "0.2.0"

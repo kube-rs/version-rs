@@ -1,4 +1,9 @@
 # version-rs
+[![CircleCI](https://circleci.com/gh/clux/version-rs/tree/master.svg?style=shield)](https://circleci.com/gh/clux/version-rs/tree/master)
+[![docker pulls](https://img.shields.io/docker/pulls/clux/version.svg)](
+https://hub.docker.com/r/clux/controller/)
+[![docker image info](https://images.microbadger.com/badges/image/clux/version.svg)](http://microbadger.com/images/clux/version)
+[![docker tag](https://images.microbadger.com/badges/version/clux/version.svg)](https://hub.docker.com/r/clux/version/tags/)
 
 An example kube deployment reflector and actix web server in ~100 lines of rust. It exposes a simple version api for deployments on `/versions`.
 
@@ -19,8 +24,7 @@ $ curl localhost:8000/versions/raftcat
 {"container":"quay.io/babylonhealth/raftcat","name":"raftcat","version":"0.112.0"}
 ```
 
-and its metrics (TODO: FIX FOR ACTIX 2):
-(currently broken, this is what it looked like):
+and its metrics:
 
 ```sh
 $ curl localhost:8000/metrics
@@ -33,4 +37,13 @@ api_http_requests_duration_seconds_count{endpoint="/",method="GET",status="200"}
 # HELP api_http_requests_total Total number of HTTP requests
 # TYPE api_http_requests_total counter
 api_http_requests_total{endpoint="/",method="GET",status="200"} 11
+```
+
+## Deploying to kubernetes
+Start a minikube cluster and apply the [deployment.yaml](./deployment.yaml) in the default namespace.
+
+Then hit the service's cluster ip with our url:
+
+```sh
+curl "$(kubectl get service  -oyaml version | yq .spec.clusterIP -r)/versions/version"
 ```
