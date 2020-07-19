@@ -2164,6 +2164,7 @@ dependencies = [
  "anyhow 1.0.28 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures-util 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "k8s-openapi 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "kube 0.36.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "kube-runtime 0.36.0 (registry+https://github.com/rust-lang/crates.io-index)",

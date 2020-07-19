@@ -1,20 +1,24 @@
-use kube_runtime::reflector::store::Writer;
-use kube_runtime::utils::try_flatten_applied;
-use kube_runtime::watcher;
-use kube_runtime::reflector::Store;
 use actix_web::{get, middleware, web, web::Data, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_prom::PrometheusMetrics;
+use futures::{StreamExt, TryStreamExt};
+use futures_util::stream::LocalBoxStream;
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
-    api::{Api, Meta, ListParams},
+    api::{Api, ListParams, Meta},
     Client,
 };
-use kube_runtime::reflector;
-use kube_runtime::reflector::ObjectRef;
+use kube_runtime::{
+    reflector,
+    reflector::{ObjectRef, Store},
+    utils::try_flatten_applied,
+    watcher,
+};
 use serde::Serialize;
-use std::{convert::TryFrom, env};
-use futures::{StreamExt, TryStreamExt};
-use tokio::stream::Stream;
+use std::{
+    convert::TryFrom,
+    env,
+    sync::{Arc, Mutex},
+};
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 
@@ -47,7 +51,8 @@ impl TryFrom<Deployment> for Entry {
 
 #[get("/versions")]
 async fn get_versions(store: Data<Store<Deployment>>) -> impl Responder {
-    let state: Vec<Entry> = store.iter()
+    let state: Vec<Entry> = store
+        .iter()
         .filter_map(|eg| Entry::try_from(eg.value().clone()).ok())
         .collect();
     HttpResponse::Ok().json(state)
@@ -68,17 +73,16 @@ async fn health(_: HttpRequest) -> impl Responder {
     HttpResponse::Ok().json("healthy")
 }
 
-fn spawn_periodic_reader(writer: Writer<Deployment>, api: Api<Deployment>) {
-    tokio::spawn(async move {
-        let watcher = watcher(api, ListParams::default());
-        let rf = reflector(writer, watcher);
-        let mut rfa = try_flatten_applied(rf).boxed();
-        while let Some(o) = rfa.try_next().await.unwrap() {
-            println!("Applied {}", Meta::name(&o));
-        }
-    });
+// This is awkward atm because our impl Stream is not Sync
+type StreamItem = std::result::Result<Deployment, kube_runtime::watcher::Error>;
+type DeployStream = LocalBoxStream<'static, StreamItem>;
+async fn local_watcher(s: Arc<Mutex<DeployStream>>) -> std::result::Result<(), kube_runtime::watcher::Error> {
+    let mut su = s.lock().unwrap();
+    while let Some(o) = su.try_next().await? {
+        println!("Applied {}", Meta::name(&o));
+    }
+    Ok(())
 }
-
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -90,26 +94,29 @@ async fn main() -> std::io::Result<()> {
 
     let store = reflector::store::Writer::<Deployment>::default();
     let reader = store.as_reader();
-
-    // Keep track of applied events in a task
-    spawn_periodic_reader(store, api);
+    let watcher = watcher(api, ListParams::default());
+    let rf = reflector(store, watcher);
+    // A bit of faff to make the stream Sync
+    let rfa: Arc<Mutex<DeployStream>> = Arc::new(Mutex::new(try_flatten_applied(rf).boxed_local()));
 
     let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
 
-    let _server = HttpServer::new(move || {
-            App::new()
-                .data(reader.clone())
-                .wrap(middleware::Logger::default().exclude("/health"))
-                .wrap(prometheus.clone())
-                .service(get_versions)
-                .service(get_version)
-                .service(health)
-            })
-        .bind("0.0.0.0:8000")
-        .expect("bind to 0.0.0.0:8000")
-        .shutdown_timeout(5)
-        .run()
-        .await?;
+    let server = HttpServer::new(move || {
+        App::new()
+            .data(reader.clone())
+            .wrap(middleware::Logger::default().exclude("/health"))
+            .wrap(prometheus.clone())
+            .service(get_versions)
+            .service(get_version)
+            .service(health)
+    })
+    .bind("0.0.0.0:8000")
+    .expect("bind to 0.0.0.0:8000")
+    .shutdown_timeout(5)
+    .run();
+    tokio::select! {
+        _ = local_watcher(rfa) => println!("logger done"),
+        _ = server => println!("server done"),
+    }
     Ok(())
-
 }
