@@ -93,11 +93,10 @@ async fn main() -> std::io::Result<()> {
     let api: Api<Deployment> = Api::namespaced(client, &namespace);
 
     let store = reflector::store::Writer::<Deployment>::default();
-    let reader = store.as_reader();
-    let watcher = watcher(api, ListParams::default());
-    let rf = reflector(store, watcher);
-    // A bit of faff to make the stream Sync
-    let rfa: Arc<Mutex<DeployStream>> = Arc::new(Mutex::new(try_flatten_applied(rf).boxed_local()));
+    let reader = store.as_reader(); // queriable state for actix
+    let rf = reflector(store, watcher(api, ListParams::default()));
+    // stream that another thread will consume
+    let rfa = Arc::new(Mutex::new(try_flatten_applied(rf).boxed_local()));
 
     let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
 
