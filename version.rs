@@ -81,10 +81,10 @@ async fn main() -> std::io::Result<()> {
     let store = reflector::store::Writer::<Deployment>::default();
     let reader = store.as_reader(); // queriable state for actix
     let rf = reflector(store, watcher(api, ListParams::default()));
-    let drainer = try_flatten_touched(rf) // need to run/drain the reflector
+    // need to run/drain the reflector - so utilize the for_each to log toucheds
+    let drainer = try_flatten_touched(rf)
         .filter_map(|x| async move { std::result::Result::ok(x) })
         .for_each(|o| {
-            // Since we are subscribing to each event anyway, log each touched object
             println!("Touched {:?}", Meta::name(&o));
             futures::future::ready(())
         });
