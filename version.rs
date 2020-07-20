@@ -1,8 +1,8 @@
-use log::{info, warn};
 use actix_web::{get, middleware, web, web::Data, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_prom::PrometheusMetrics;
-use futures::{StreamExt, TryStreamExt};
-use futures_util::stream::BoxStream;
+use futures::StreamExt;
+use log::{info, warn};
+
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
     api::{Api, ListParams, Meta},
@@ -11,14 +11,11 @@ use kube::{
 use kube_runtime::{
     reflector,
     reflector::{ObjectRef, Store},
-    utils::try_flatten_applied,
+    utils::try_flatten_touched,
     watcher,
 };
 use serde::Serialize;
-use std::{
-    convert::TryFrom,
-    env,
-};
+use std::{convert::TryFrom, env};
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 
@@ -73,14 +70,6 @@ async fn health(_: HttpRequest) -> impl Responder {
     HttpResponse::Ok().json("healthy")
 }
 
-type StreamItem = std::result::Result<Deployment, kube_runtime::watcher::Error>;
-async fn stream_drainer(mut su: BoxStream<'static, StreamItem>) -> std::result::Result<(), kube_runtime::watcher::Error> {
-    while let Some(o) = su.try_next().await? {
-        println!("Applied {}", Meta::name(&o));
-    }
-    Ok(())
-}
-
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     env::set_var("RUST_LOG", "info,kube=debug");
@@ -92,7 +81,13 @@ async fn main() -> std::io::Result<()> {
     let store = reflector::store::Writer::<Deployment>::default();
     let reader = store.as_reader(); // queriable state for actix
     let rf = reflector(store, watcher(api, ListParams::default()));
-    let rfa = try_flatten_applied(rf).boxed(); // stream that another thread will consume
+    let drainer = try_flatten_touched(rf) // need to run/drain the reflector
+        .filter_map(|x| async move { std::result::Result::ok(x) })
+        .for_each(|o| {
+            // Since we are subscribing to each event anyway, log each touched object
+            println!("Touched {:?}", Meta::name(&o));
+            futures::future::ready(())
+        });
 
     let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
 
@@ -109,8 +104,9 @@ async fn main() -> std::io::Result<()> {
     .expect("bind to 0.0.0.0:8000")
     .shutdown_timeout(5)
     .run();
+
     tokio::select! {
-        _ = stream_drainer(rfa) => warn!("reflector drained"),
+        _ = drainer => warn!("reflector drained"),
         _ = server => info!("actix exited"),
     }
     Ok(())
