@@ -17,7 +17,7 @@ use serde::Serialize;
 use std::{
     convert::TryFrom,
     env,
-    sync::{Arc, Mutex},
+    sync::Mutex,
 };
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
@@ -76,7 +76,7 @@ async fn health(_: HttpRequest) -> impl Responder {
 // This is awkward atm because our impl Stream is not Sync
 type StreamItem = std::result::Result<Deployment, kube_runtime::watcher::Error>;
 type DeployStream = LocalBoxStream<'static, StreamItem>;
-async fn local_watcher(s: Arc<Mutex<DeployStream>>) -> std::result::Result<(), kube_runtime::watcher::Error> {
+async fn local_watcher(s: Mutex<DeployStream>) -> std::result::Result<(), kube_runtime::watcher::Error> {
     let mut su = s.lock().unwrap();
     while let Some(o) = su.try_next().await? {
         println!("Applied {}", Meta::name(&o));
@@ -96,7 +96,7 @@ async fn main() -> std::io::Result<()> {
     let reader = store.as_reader(); // queriable state for actix
     let rf = reflector(store, watcher(api, ListParams::default()));
     // stream that another thread will consume
-    let rfa = Arc::new(Mutex::new(try_flatten_applied(rf).boxed_local()));
+    let rfa = Mutex::new(try_flatten_applied(rf).boxed_local());
 
     let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
 

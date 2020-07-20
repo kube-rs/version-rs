@@ -12,14 +12,16 @@ path = "version.rs"
 [dependencies]
 actix-web = "2.0.0"
 actix-rt = "1.1.0"
-#kube = { git = "https://github.com/clux/kube-rs", rev = "ab4728a199ec1f61c2968417fa1d6699a0e0d03a" }
-kube = { version = "0.36.0" }
-kube-runtime = { version = "0.36.0" }
-k8s-openapi = { version = "0.8.0", features = ["v1_17"], default-features=false }
+kube = { git = "https://github.com/clux/kube-rs", rev = "d095d2eec79a43784b438f8f1bdda1b84dd68c40" }
+kube-runtime = { git = "https://github.com/clux/kube-rs", rev = "d095d2eec79a43784b438f8f1bdda1b84dd68c40" }
+#kube-runtime = { version = "0.36.0" }
+#kube = { version = "0.36.0" }
+#kube-runtime = { version = "0.36.0" }
+k8s-openapi = { version = "0.9.0", features = ["v1_17"], default-features=false }
 serde = { version = "1.0.106", features = ["derive"] }
-log = "0.4.7"
+log = "0.4.11"
 env_logger = "0.7.1"
-anyhow = "1.0.26"
+anyhow = "1.0.31"
 futures = "0.3.4"
 actix-web-prom = "0.2.0"
 tokio = { version = "0.2.21", features = ["full"] }
