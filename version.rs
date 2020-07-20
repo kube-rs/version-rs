@@ -1,7 +1,8 @@
+use log::{info, warn};
 use actix_web::{get, middleware, web, web::Data, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_prom::PrometheusMetrics;
 use futures::{StreamExt, TryStreamExt};
-use futures_util::stream::LocalBoxStream;
+use futures_util::stream::BoxStream;
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
     api::{Api, ListParams, Meta},
@@ -17,7 +18,6 @@ use serde::Serialize;
 use std::{
     convert::TryFrom,
     env,
-    sync::Mutex,
 };
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
@@ -73,11 +73,8 @@ async fn health(_: HttpRequest) -> impl Responder {
     HttpResponse::Ok().json("healthy")
 }
 
-// This is awkward atm because our impl Stream is not Sync
 type StreamItem = std::result::Result<Deployment, kube_runtime::watcher::Error>;
-type DeployStream = LocalBoxStream<'static, StreamItem>;
-async fn local_watcher(s: Mutex<DeployStream>) -> std::result::Result<(), kube_runtime::watcher::Error> {
-    let mut su = s.lock().unwrap();
+async fn stream_drainer(mut su: BoxStream<'static, StreamItem>) -> std::result::Result<(), kube_runtime::watcher::Error> {
     while let Some(o) = su.try_next().await? {
         println!("Applied {}", Meta::name(&o));
     }
@@ -95,8 +92,7 @@ async fn main() -> std::io::Result<()> {
     let store = reflector::store::Writer::<Deployment>::default();
     let reader = store.as_reader(); // queriable state for actix
     let rf = reflector(store, watcher(api, ListParams::default()));
-    // stream that another thread will consume
-    let rfa = Mutex::new(try_flatten_applied(rf).boxed_local());
+    let rfa = try_flatten_applied(rf).boxed(); // stream that another thread will consume
 
     let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
 
@@ -114,8 +110,8 @@ async fn main() -> std::io::Result<()> {
     .shutdown_timeout(5)
     .run();
     tokio::select! {
-        _ = local_watcher(rfa) => println!("logger done"),
-        _ = server => println!("server done"),
+        _ = stream_drainer(rfa) => warn!("reflector drained"),
+        _ = server => info!("actix exited"),
     }
     Ok(())
 }

@@ -10,10 +10,17 @@ name = "version"
 path = "version.rs"
 
 [dependencies]
-actix-web = "2.0.0"
 actix-rt = "1.1.0"
-kube = { git = "https://github.com/clux/kube-rs", rev = "d095d2eec79a43784b438f8f1bdda1b84dd68c40" }
-kube-runtime = { git = "https://github.com/clux/kube-rs", rev = "d095d2eec79a43784b438f8f1bdda1b84dd68c40" }
+actix-web = "2.0.0"
+actix-web-prom = "0.2.0"
+futures = "0.3.4"
+futures-util = "0.3.5"
+tokio = { version = "0.2.21", features = ["full"] }
+#kube = { git = "https://github.com/clux/kube-rs", rev = "d095d2eec79a43784b438f8f1bdda1b84dd68c40" }
+#kube-runtime = { git = "https://github.com/clux/kube-rs", rev = "d095d2eec79a43784b438f8f1bdda1b84dd68c40" }
+kube = { git = "https://github.com/teozkr/kube-rs", rev = "1beb0f4da2384c39a0ad1dc590f4c972fe438f59" }
+#kube-derive = { git = "https://github.com/teozkr/kube-rs", rev = "1beb0f4da2384c39a0ad1dc590f4c972fe438f59" }
+kube-runtime = { git = "https://github.com/teozkr/kube-rs", rev = "1beb0f4da2384c39a0ad1dc590f4c972fe438f59" }
 #kube-runtime = { version = "0.36.0" }
 #kube = { version = "0.36.0" }
 #kube-runtime = { version = "0.36.0" }
@@ -22,7 +29,3 @@ serde = { version = "1.0.106", features = ["derive"] }
 log = "0.4.11"
 env_logger = "0.7.1"
 anyhow = "1.0.31"
-futures = "0.3.4"
-actix-web-prom = "0.2.0"
-tokio = { version = "0.2.21", features = ["full"] }
-futures-util = "0.3.5"
