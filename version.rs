@@ -1,7 +1,8 @@
 use actix_web::{get, middleware, web, web::Data, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_prom::PrometheusMetrics;
 use futures::StreamExt;
-use log::{info, warn};
+#[allow(unused_imports)]
+use tracing::{debug, error, info, trace, warn};
 
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
@@ -72,8 +73,9 @@ async fn health(_: HttpRequest) -> impl Responder {
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    env::set_var("RUST_LOG", "info,kube=debug");
-    env_logger::init();
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
     let client = Client::try_default().await.expect("create client");
     let namespace = env::var("NAMESPACE").unwrap_or("default".into());
     let api: Api<Deployment> = Api::namespaced(client, &namespace);
@@ -85,7 +87,7 @@ async fn main() -> std::io::Result<()> {
     let drainer = try_flatten_touched(rf)
         .filter_map(|x| async move { std::result::Result::ok(x) })
         .for_each(|o| {
-            println!("Touched {:?}", Meta::name(&o));
+            debug!("Touched {:?}", Meta::name(&o));
             futures::future::ready(())
         });
 
