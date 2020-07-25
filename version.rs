@@ -1,8 +1,7 @@
 use actix_web::{get, middleware, web, web::Data, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_prom::PrometheusMetrics;
 use futures::StreamExt;
-#[allow(unused_imports)]
-use tracing::{debug, error, info, trace, warn};
+#[allow(unused_imports)] use tracing::{debug, error, info, trace, warn};
 
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
@@ -50,8 +49,9 @@ impl TryFrom<Deployment> for Entry {
 #[get("/versions")]
 async fn get_versions(store: Data<Store<Deployment>>) -> impl Responder {
     let state: Vec<Entry> = store
-        .iter()
-        .filter_map(|eg| Entry::try_from(eg.value().clone()).ok())
+        .state()
+        .into_iter()
+        .filter_map(|d| Entry::try_from(d).ok())
         .collect();
     HttpResponse::Ok().json(state)
 }
