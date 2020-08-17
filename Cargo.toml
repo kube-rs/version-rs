@@ -14,11 +14,11 @@ actix-rt = "1.1.0"
 actix-web = "2.0.0"
 actix-web-prom = "0.2.0"
 futures = "0.3.5"
-tokio = { version = "0.2.21", features = ["macros"] }
-kube-runtime = { version = "0.38.0" }
-kube = { version = "0.38.0" }
+tokio = { version = "0.2.22", features = ["macros"] }
+kube-runtime = { version = "0.40.0" }
+kube = { version = "0.40.0" }
 k8s-openapi = { version = "0.9.0", features = ["v1_17"], default-features=false }
-serde = { version = "1.0.106", features = ["derive"] }
-anyhow = "1.0.31"
-tracing = "0.1.16"
-tracing-subscriber = "0.2.8"
+serde = { version = "1.0.115", features = ["derive"] }
+anyhow = "1.0.32"
+tracing = "0.1.19"
+tracing-subscriber = "0.2.11"
