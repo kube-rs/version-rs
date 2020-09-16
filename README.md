@@ -17,17 +17,17 @@ $ NAMESPACE=dev cargo run
 then you can get simplified version info back on its web server:
 
 ```sh
-$ curl localhost:8000/versions
+$ curl 0.0.0.0:8000/versions
 [{"container":"quay.io/babylonhealth/raftcat","name":"raftcat","version":"0.112.0"}]
 
-$ curl localhost:8000/versions/raftcat
+$ curl 0.0.0.0:8000/versions/raftcat
 {"container":"quay.io/babylonhealth/raftcat","name":"raftcat","version":"0.112.0"}
 ```
 
 and its metrics:
 
 ```sh
-$ curl localhost:8000/metrics
+$ curl 0.0.0.0:8000/metrics
 api_http_requests_duration_seconds_bucket{endpoint="/",method="GET",status="200",le="0.005"} 11
 ...
 ...
