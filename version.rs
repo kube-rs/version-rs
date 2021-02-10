@@ -1,5 +1,5 @@
 use actix_web::{get, middleware, web, web::Data, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use actix_web_prom::PrometheusMetrics;
+//use actix_web_prom::PrometheusMetrics;
 use futures::StreamExt;
 #[allow(unused_imports)] use tracing::{debug, error, info, trace, warn};
 
@@ -91,13 +91,13 @@ async fn main() -> std::io::Result<()> {
             futures::future::ready(())
         });
 
-    let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
+    //let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
 
     let server = HttpServer::new(move || {
         App::new()
             .data(reader.clone())
             .wrap(middleware::Logger::default().exclude("/health"))
-            .wrap(prometheus.clone())
+            //.wrap(prometheus.clone())
             .service(get_versions)
             .service(get_version)
             .service(health)

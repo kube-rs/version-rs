@@ -10,15 +10,15 @@ name = "version"
 path = "version.rs"
 
 [dependencies]
-actix-rt = "1.1.0"
-actix-web = "3.3.2"
-actix-web-prom = "0.5.0"
-futures = "0.3.8"
-tokio = { version = "0.2.24", features = ["macros"] }
-kube = "0.44.0"
-kube-runtime = "0.44.0"
-k8s-openapi = { version = "0.10.0", features = ["v1_19"], default-features=false }
-serde = { version = "1.0.118", features = ["derive"] }
-anyhow = "1.0.36"
+actix-rt = "2.0.0-beta.2"
+actix-web = "4.0.0-beta.1"
+actix-web-prom = "0.5.1"
+futures = "0.3.12"
+tokio = { version = "1.2.0", features = ["macros"] }
+kube = "0.50.0"
+kube-runtime = "0.50.0"
+k8s-openapi = { version = "0.11.0", features = ["v1_19"], default-features=false }
+serde = { version = "1.0.119", features = ["derive"] }
+anyhow = "1.0.38"
 tracing = "0.1.22"
 tracing-subscriber = "0.2.15"
