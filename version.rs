@@ -5,7 +5,7 @@ use futures::StreamExt;
 
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
-    api::{Api, ListParams, Meta},
+    api::{Api, ListParams, Resource},
     Client,
 };
 use kube_runtime::{
@@ -29,7 +29,7 @@ impl TryFrom<Deployment> for Entry {
     type Error = anyhow::Error;
 
     fn try_from(d: Deployment) -> Result<Self> {
-        let name = Meta::name(&d);
+        let name = Resource::name(&d);
         if let Some(ref img) = d.spec.unwrap().template.spec.unwrap().containers[0].image {
             if img.contains(':') {
                 let splits: Vec<_> = img.split(':').collect();
@@ -87,7 +87,7 @@ async fn main() -> std::io::Result<()> {
     let drainer = try_flatten_touched(rf)
         .filter_map(|x| async move { std::result::Result::ok(x) })
         .for_each(|o| {
-            debug!("Touched {:?}", Meta::name(&o));
+            debug!("Touched {:?}", Resource::name(&o));
             futures::future::ready(())
         });
 
