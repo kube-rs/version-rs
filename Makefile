@@ -15,7 +15,7 @@ build:
 	docker build -t $(REPO)/$(NAME):$(VERSION) .
 
 run:
-	NAMESPACE=dev RUST_LOG=info cargo run
+	RUST_LOG=info cargo run
 
 tag-latest:
 	docker tag $(REPO)/$(NAME):$(VERSION) $(REPO)/$(NAME):latest

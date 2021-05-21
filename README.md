@@ -11,20 +11,20 @@ An example kube deployment reflector and actix web server in ~100 lines of rust.
 Connect to a kube cluster and give it a namespace to watch for deployments:
 
 ```sh
-$ NAMESPACE=dev cargo run
+$ NAMESPACE=default cargo run
 ```
 
 then you can get simplified version info back on its web server:
 
 ```sh
 $ curl 0.0.0.0:8000/versions
-[{"container":"quay.io/babylonhealth/raftcat","name":"raftcat","version":"0.112.0"}]
+[{"container":"clux/controller","name":"foo-controller","version":"latest"},{"container":"alpine","name":"debugger","version":"3.13"}]
 
-$ curl 0.0.0.0:8000/versions/raftcat
-{"container":"quay.io/babylonhealth/raftcat","name":"raftcat","version":"0.112.0"}
+$ curl 0.0.0.0:8000/versions/foo-controller
+{"container":"clux/controller","name":"foo-controller","version":"latest"}
 ```
 
-and its metrics:
+and its metrics (currently disabled due to actix upgrade issues):
 
 ```sh
 $ curl 0.0.0.0:8000/metrics
