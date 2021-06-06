@@ -8,10 +8,10 @@ https://hub.docker.com/r/clux/version/)
 An example kube deployment reflector and actix web server in ~100 lines of rust. It exposes a simple version api for deployments on `/versions`.
 
 ## Usage
-Connect to a kube cluster and give it a namespace to watch for deployments:
+Connect to a kube cluster and give it a namespace to watch for deployments in your context's namespace:
 
 ```sh
-$ NAMESPACE=default cargo run
+cargo run
 ```
 
 then you can get simplified version info back on its web server:
@@ -20,7 +20,7 @@ then you can get simplified version info back on its web server:
 $ curl 0.0.0.0:8000/versions
 [{"container":"clux/controller","name":"foo-controller","version":"latest"},{"container":"alpine","name":"debugger","version":"3.13"}]
 
-$ curl 0.0.0.0:8000/versions/foo-controller
+$ curl 0.0.0.0:8000/versions/default/foo-controller
 {"container":"clux/controller","name":"foo-controller","version":"latest"}
 ```
 

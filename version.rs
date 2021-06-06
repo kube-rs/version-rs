@@ -4,11 +4,7 @@ use futures::StreamExt;
 #[allow(unused_imports)] use tracing::{debug, error, info, trace, warn};
 
 use k8s_openapi::api::apps::v1::Deployment;
-use kube::{
-    api::{Api, ListParams},
-    ResourceExt,
-    Client,
-};
+use kube::{Api, Client, ResourceExt};
 use kube_runtime::{
     reflector,
     reflector::{ObjectRef, Store},
@@ -16,7 +12,7 @@ use kube_runtime::{
     watcher,
 };
 use serde::Serialize;
-use std::{convert::TryFrom, env};
+use std::convert::TryFrom;
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 
@@ -24,6 +20,7 @@ type Result<T> = std::result::Result<T, anyhow::Error>;
 pub struct Entry {
     container: String,
     name: String,
+    namespace: String,
     version: String,
 }
 impl TryFrom<Deployment> for Entry {
@@ -31,15 +28,14 @@ impl TryFrom<Deployment> for Entry {
 
     fn try_from(d: Deployment) -> Result<Self> {
         let name = d.name();
+        let namespace = d.namespace().clone().unwrap();
         if let Some(ref img) = d.spec.unwrap().template.spec.unwrap().containers[0].image {
             if img.contains(':') {
                 let splits: Vec<_> = img.split(':').collect();
-                let container = splits[0].to_string();
-                let version = splits[1].to_string();
                 return Ok(Entry {
-                    container,
-                    name,
-                    version,
+                    name, namespace,
+                    container: splits[0].to_string(),
+                    version: splits[1].to_string(),
                 });
             }
         }
@@ -56,9 +52,9 @@ async fn get_versions(store: Data<Store<Deployment>>) -> impl Responder {
         .collect();
     HttpResponse::Ok().json(state)
 }
-#[get("/versions/{name}")]
-async fn get_version(store: Data<Store<Deployment>>, name: web::Path<String>) -> impl Responder {
-    let namespace = env::var("NAMESPACE").unwrap_or("default".into());
+#[get("/versions/{namespace}/{name}")]
+async fn get_version(store: Data<Store<Deployment>>, path: web::Path<(String, String)>) -> impl Responder {
+    let (namespace, name) = path.into_inner();
     let key = ObjectRef::new(&name).within(&namespace);
     if let Some(d) = store.get(&key) {
         if let Ok(e) = Entry::try_from(d) {
@@ -78,12 +74,11 @@ async fn main() -> std::io::Result<()> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
     let client = Client::try_default().await.expect("create client");
-    let namespace = env::var("NAMESPACE").unwrap_or("default".into());
-    let api: Api<Deployment> = Api::namespaced(client, &namespace);
+    let api: Api<Deployment> = Api::default_namespaced(client);
 
     let store = reflector::store::Writer::<Deployment>::default();
     let reader = store.as_reader(); // queriable state for actix
-    let rf = reflector(store, watcher(api, ListParams::default()));
+    let rf = reflector(store, watcher(api, Default::default()));
     // need to run/drain the reflector - so utilize the for_each to log toucheds
     let drainer = try_flatten_touched(rf)
         .filter_map(|x| async move { std::result::Result::ok(x) })
