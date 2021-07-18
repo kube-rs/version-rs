@@ -3,6 +3,7 @@ name = "version"
 version = "1.7.0"
 authors = ["Eirik Albrigtsen <sszynrae@gmail.com>"]
 edition = "2018"
+license = "Apache-2.0"
 
 [[bin]]
 doc = false
