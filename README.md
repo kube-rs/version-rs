@@ -1,5 +1,5 @@
 # version-rs
-[![CircleCI](https://circleci.com/gh/clux/version-rs/tree/master.svg?style=shield)](https://circleci.com/gh/clux/version-rs/tree/master)
+[![CircleCI](https://circleci.com/gh/kube-rs/version-rs/tree/master.svg?style=shield)](https://circleci.com/gh/kube-rs/version-rs/tree/master)
 [![docker pulls](https://img.shields.io/docker/pulls/clux/version.svg)](
 https://hub.docker.com/r/clux/version/)
 [![docker image info](https://images.microbadger.com/badges/image/clux/version.svg)](http://microbadger.com/images/clux/version)
@@ -8,13 +8,13 @@ https://hub.docker.com/r/clux/version/)
 An example kube deployment reflector and actix web server in ~100 lines of rust. It exposes a simple version api for deployments on `/versions`.
 
 ## Usage
-Connect to a kube cluster and give it a namespace to watch for deployments in your context's namespace:
+Start the watcher against your current kubernetes context:
 
 ```sh
 cargo run
 ```
 
-then you can get simplified version info back on its web server:
+This will monitor the namespace of your context, and give you simplified version info on its web server:
 
 ```sh
 $ curl 0.0.0.0:8000/versions

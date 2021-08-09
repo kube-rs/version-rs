@@ -91,7 +91,7 @@ async fn main() -> std::io::Result<()> {
 
     let server = HttpServer::new(move || {
         App::new()
-            .data(reader.clone())
+            .app_data(Data::new(reader.clone()))
             .wrap(middleware::Logger::default().exclude("/health"))
             //.wrap(prometheus.clone())
             .service(get_versions)
