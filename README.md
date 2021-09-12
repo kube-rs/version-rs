@@ -48,4 +48,4 @@ curl "$(kubectl get service  -oyaml version | yq .spec.clusterIP -r)/versions/ve
 
 ## Developing
 - Locally against a cluster: `cargo run`
-- In-cluster: edit and `[tilt](https://tilt.dev/) up`
+- In-cluster: edit and `tilt up` [*](https://tilt.dev/)
