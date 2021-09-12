@@ -1,9 +1,6 @@
 # version-rs
 [![CircleCI](https://circleci.com/gh/kube-rs/version-rs/tree/master.svg?style=shield)](https://circleci.com/gh/kube-rs/version-rs/tree/master)
-[![docker pulls](https://img.shields.io/docker/pulls/clux/version.svg)](
-https://hub.docker.com/r/clux/version/)
-[![docker image info](https://images.microbadger.com/badges/image/clux/version.svg)](http://microbadger.com/images/clux/version)
-[![docker tag](https://images.microbadger.com/badges/version/clux/version.svg)](https://hub.docker.com/r/clux/version/tags/)
+[![docker image](https://hub.docker.com/r/clux/version/tags)
 
 An example kube deployment reflector and actix web server in ~100 lines of rust. It exposes a simple version api for deployments on `/versions`.
 
@@ -47,3 +44,7 @@ Then hit the service's cluster ip with our url:
 ```sh
 curl "$(kubectl get service  -oyaml version | yq .spec.clusterIP -r)/versions/version"
 ```
+
+## Developing
+- Locally against a cluster: `cargo run`
+- In-cluster: edit and `[tilt](https://tilt.dev/) up`
