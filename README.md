@@ -1,6 +1,7 @@
 # version-rs
 [![CircleCI](https://circleci.com/gh/kube-rs/version-rs/tree/master.svg?style=shield)](https://circleci.com/gh/kube-rs/version-rs/tree/master)
-[![docker image](https://hub.docker.com/r/clux/version/tags)
+[![docker image](https://img.shields.io/docker/pulls/clux/version.svg)](
+https://hub.docker.com/r/clux/version/tags/)
 
 An example kube deployment reflector and actix web server in ~100 lines of rust. It exposes a simple version api for deployments on `/versions`.
 
