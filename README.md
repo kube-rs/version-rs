@@ -6,13 +6,20 @@ https://hub.docker.com/r/clux/version/tags/)
 An example kube deployment reflector and actix web server in ~100 lines of rust. It exposes a simple version api for deployments on `/versions`.
 
 ## Usage
-Start the watcher against your current kubernetes context:
+Clone the repo and either run locally or deploy into a cluster:
+
+### Locally
+Run against your current kubernetes context:
 
 ```sh
 cargo run
 ```
 
-This will monitor the namespace of your context, and give you simplified version info on its web server:
+### In-Cluster
+Apply [deployment.yaml](./deployment.yaml), then `kubectl port-forward service/version 8000:8000`
+
+### Api
+Once running, the app will monitor the namespace of your context, and give you simplified version info on its web interface:
 
 ```sh
 $ curl 0.0.0.0:8000/versions
@@ -37,15 +44,12 @@ api_http_requests_duration_seconds_count{endpoint="/",method="GET",status="200"}
 api_http_requests_total{endpoint="/",method="GET",status="200"} 11
 ```
 
-## Deploying to kubernetes
-Start a minikube cluster and apply the [deployment.yaml](./deployment.yaml) in the default namespace.
-
-Then hit the service's cluster ip with our url:
-
-```sh
-curl "$(kubectl get service  -oyaml version | yq .spec.clusterIP -r)/versions/version"
-```
-
 ## Developing
 - Locally against a cluster: `cargo run`
 - In-cluster: edit and `tilt up` [*](https://tilt.dev/)
+
+To build the image directly, run:
+
+```sh
+DOCKER_BUILDKIT=1 docker build -t clux/version .
+```
