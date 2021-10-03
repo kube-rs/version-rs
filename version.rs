@@ -23,17 +23,19 @@ pub struct Entry {
     namespace: String,
     version: String,
 }
+
 impl TryFrom<Deployment> for Entry {
     type Error = anyhow::Error;
 
     fn try_from(d: Deployment) -> Result<Self> {
         let name = d.name();
-        let namespace = d.namespace().clone().unwrap();
+        let namespace = d.namespace().unwrap();
         if let Some(ref img) = d.spec.unwrap().template.spec.unwrap().containers[0].image {
             if img.contains(':') {
                 let splits: Vec<_> = img.split(':').collect();
                 return Ok(Entry {
-                    name, namespace,
+                    name,
+                    namespace,
                     container: splits[0].to_string(),
                     version: splits[1].to_string(),
                 });
@@ -88,7 +90,6 @@ async fn main() -> std::io::Result<()> {
         });
 
     //let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
-
     let server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(reader.clone()))
