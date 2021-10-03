@@ -1,5 +1,5 @@
 # version-rs
-[![CircleCI](https://circleci.com/gh/kube-rs/version-rs/tree/master.svg?style=shield)](https://circleci.com/gh/kube-rs/version-rs/tree/master)
+[![ci](https://github.com/kube-rs/version-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/kube-rs/version-rs/actions/workflows/ci.yml)
 [![docker image](https://img.shields.io/docker/pulls/clux/version.svg)](
 https://hub.docker.com/r/clux/version/tags/)
 
