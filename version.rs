@@ -23,7 +23,6 @@ pub struct Entry {
     namespace: String,
     version: String,
 }
-
 impl TryFrom<Deployment> for Entry {
     type Error = anyhow::Error;
 
