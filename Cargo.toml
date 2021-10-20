@@ -1,6 +1,6 @@
 [package]
 name = "version"
-version = "1.10.1"
+version = "1.10.2"
 authors = ["Eirik Albrigtsen <sszynrae@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -12,15 +12,20 @@ name = "version"
 path = "version.rs"
 
 [dependencies]
-actix-rt = "2.2.0"
+actix-rt = "2.3.0"
 actix-web = "3.3.2"
 actix-web-prom = "0.5.1"
 futures = "0.3.17"
 tokio = { version = "1.12.0", features = ["macros"] }
-kube = "0.61.0"
-kube-runtime = "0.61.0"
 k8s-openapi = { version = "0.13.1", features = ["v1_20"], default-features = false }
 serde = { version = "1.0.130", features = ["derive"] }
 anyhow = "1.0.44"
 tracing = "0.1.29"
 tracing-subscriber = "0.2.25"
+
+[dependencies.kube]
+#version = "0.62.0"
+git = "https://github.com/kube-rs/kube-rs.git"
+rev = "08c894cef560bd716c10b9bba426b1355e1907fe"
+#path = "../kube-rs/kube"
+features = ["runtime", "client"]

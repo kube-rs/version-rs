@@ -134,9 +134,9 @@ dependencies = [
 
 [[package]]
 name = "actix-rt"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc7d7cd957c9ed92288a7c3c96af81fa5291f65247a76a34dac7b6af74e52ba0"
+checksum = "ea360596a50aa9af459850737f99293e5cb9114ae831118cb6026b3bbc7583ad"
 dependencies = [
  "actix-macros 0.2.1",
  "futures-core",
@@ -1108,8 +1108,17 @@ dependencies = [
 [[package]]
 name = "kube"
 version = "0.61.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbaea4edf25bd83d77eebacd353bacd35d659678d57238aae07a8d739b26f1cd"
+source = "git+https://github.com/kube-rs/kube-rs.git?rev=08c894cef560bd716c10b9bba426b1355e1907fe#08c894cef560bd716c10b9bba426b1355e1907fe"
+dependencies = [
+ "kube-client",
+ "kube-core",
+ "kube-runtime",
+]
+
+[[package]]
+name = "kube-client"
+version = "0.61.0"
+source = "git+https://github.com/kube-rs/kube-rs.git?rev=08c894cef560bd716c10b9bba426b1355e1907fe#08c894cef560bd716c10b9bba426b1355e1907fe"
 dependencies = [
  "base64",
  "bytes 1.1.0",
@@ -1143,8 +1152,7 @@ dependencies = [
 [[package]]
 name = "kube-core"
 version = "0.61.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa3021021480d7034e2cbe50bff9e8176e5ce33ddd6ba0c26ea9cfe310304c63"
+source = "git+https://github.com/kube-rs/kube-rs.git?rev=08c894cef560bd716c10b9bba426b1355e1907fe#08c894cef560bd716c10b9bba426b1355e1907fe"
 dependencies = [
  "chrono",
  "form_urlencoded",
@@ -1160,15 +1168,14 @@ dependencies = [
 [[package]]
 name = "kube-runtime"
 version = "0.61.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b10dde88f05e8dc156d72736639476b62ae1bedf99680dc32556ac4de274a9ea"
+source = "git+https://github.com/kube-rs/kube-rs.git?rev=08c894cef560bd716c10b9bba426b1355e1907fe#08c894cef560bd716c10b9bba426b1355e1907fe"
 dependencies = [
  "dashmap",
  "derivative",
  "futures",
  "json-patch",
  "k8s-openapi",
- "kube",
+ "kube-client",
  "pin-project 1.0.4",
  "serde",
  "serde_json",
@@ -2538,16 +2545,15 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "version"
-version = "1.10.1"
+version = "1.10.2"
 dependencies = [
- "actix-rt 2.2.0",
+ "actix-rt 2.3.0",
  "actix-web",
  "actix-web-prom",
  "anyhow",
  "futures",
  "k8s-openapi",
  "kube",
- "kube-runtime",
  "serde",
  "tokio 1.12.0",
  "tracing",

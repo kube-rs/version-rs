@@ -4,12 +4,13 @@ use futures::StreamExt;
 #[allow(unused_imports)] use tracing::{debug, error, info, trace, warn};
 
 use k8s_openapi::api::apps::v1::Deployment;
-use kube::{Api, Client, ResourceExt};
-use kube_runtime::{
-    reflector,
-    reflector::{ObjectRef, Store},
-    utils::try_flatten_touched,
-    watcher,
+use kube::{
+    Api, Client, ResourceExt,
+    runtime::{
+        reflector::{ObjectRef, Store},
+        utils::try_flatten_touched,
+        watcher, reflector
+    }
 };
 use serde::Serialize;
 use std::convert::TryFrom;
