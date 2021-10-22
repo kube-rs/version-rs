@@ -1,6 +1,6 @@
 [package]
 name = "version"
-version = "1.10.2"
+version = "1.11.0"
 authors = ["Eirik Albrigtsen <sszynrae@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -13,7 +13,7 @@ path = "version.rs"
 
 [dependencies]
 actix-rt = "2.3.0"
-actix-web = "3.3.2"
+actix-web = "4.0.0-beta.9"
 actix-web-prom = "0.5.1"
 futures = "0.3.17"
 tokio = { version = "1.12.0", features = ["macros"] }

@@ -5,12 +5,13 @@ use futures::StreamExt;
 
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
-    Api, Client, ResourceExt,
     runtime::{
+        reflector,
         reflector::{ObjectRef, Store},
         utils::try_flatten_touched,
-        watcher, reflector
-    }
+        watcher,
+    },
+    Api, Client, ResourceExt,
 };
 use serde::Serialize;
 use std::convert::TryFrom;
