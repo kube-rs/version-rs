@@ -24,8 +24,9 @@ tracing = "0.1.29"
 tracing-subscriber = "0.2.25"
 
 [dependencies.kube]
-#version = "0.62.0"
-git = "https://github.com/kube-rs/kube-rs.git"
-rev = "08c894cef560bd716c10b9bba426b1355e1907fe"
-#path = "../kube-rs/kube"
+version = "0.62.0"
 features = ["runtime", "client"]
+# local testing: ignore
+#git = "https://github.com/kube-rs/kube-rs.git"
+#rev = "08c894cef560bd716c10b9bba426b1355e1907fe"
+#path = "../kube-rs/kube"
