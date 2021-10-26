@@ -1,9 +1,13 @@
-use actix_web::{get, middleware, web, web::Data, App, HttpRequest, HttpResponse, HttpServer, Responder};
-//use actix_web_prom::PrometheusMetrics;
+use axum::{
+    body::{Bytes, Full},
+    extract::{Extension, Path},
+    handler::get,
+    http::{Response, StatusCode},
+    response::IntoResponse,
+    AddExtensionLayer, Json, Router,
+};
 use futures::StreamExt;
-#[allow(unused_imports)] use tracing::{debug, error, info, trace, warn};
-
-use k8s_openapi::api::apps::v1::Deployment;
+use k8s_openapi::{api::apps::v1::Deployment, serde_json::json};
 use kube::{
     runtime::{
         reflector,
@@ -14,7 +18,14 @@ use kube::{
     Api, Client, ResourceExt,
 };
 use serde::Serialize;
-use std::convert::TryFrom;
+use std::{
+    convert::{Infallible, TryFrom},
+    net::SocketAddr,
+};
+use tokio::signal::unix::{signal, SignalKind};
+use tower_http::trace::TraceLayer;
+#[allow(unused_imports)]
+use tracing::{debug, error, info, instrument, trace, warn};
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 
@@ -46,32 +57,61 @@ impl TryFrom<Deployment> for Entry {
     }
 }
 
-#[get("/versions")]
-async fn get_versions(store: Data<Store<Deployment>>) -> impl Responder {
+#[derive(Debug)]
+enum Error {
+    NotFound,
+}
+
+impl IntoResponse for Error {
+    type Body = Full<Bytes>;
+    type BodyError = Infallible;
+
+    fn into_response(self) -> Response<Self::Body> {
+        let (status, error_message) = match self {
+            Error::NotFound => (StatusCode::NOT_FOUND, "not found"),
+        };
+
+        let body = Json(json!({
+            "error": error_message,
+        }));
+
+        (status, body).into_response()
+    }
+}
+
+// Intended route: /versions
+#[instrument(skip(store))]
+async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
     let state: Vec<Entry> = store
         .state()
         .into_iter()
         .filter_map(|d| Entry::try_from(d).ok())
         .collect();
-    HttpResponse::Ok().json(state)
+    Json(state)
 }
-#[get("/versions/{namespace}/{name}")]
-async fn get_version(store: Data<Store<Deployment>>, path: web::Path<(String, String)>) -> impl Responder {
-    let (namespace, name) = path.into_inner();
+
+// Intended route: /versions/<namespace>/<name>
+#[instrument(skip(store))]
+async fn get_version(
+    store: Extension<Store<Deployment>>,
+    Path((namespace, name)): Path<(String, String)>,
+) -> std::result::Result<Json<Entry>, Error> {
     let key = ObjectRef::new(&name).within(&namespace);
     if let Some(d) = store.get(&key) {
         if let Ok(e) = Entry::try_from(d) {
-            return HttpResponse::Ok().json(e);
+            return Ok(Json(e));
         }
     }
-    HttpResponse::NotFound().finish()
-}
-#[get("/health")]
-async fn health(_: HttpRequest) -> impl Responder {
-    HttpResponse::Ok().json("healthy")
+    Err(Error::NotFound)
 }
 
-#[actix_rt::main]
+// Intended route: /health
+#[instrument]
+async fn health() -> (StatusCode, Json<&'static str>) {
+    (StatusCode::OK, Json("healthy"))
+}
+
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::DEBUG)
@@ -80,7 +120,7 @@ async fn main() -> std::io::Result<()> {
     let api: Api<Deployment> = Api::default_namespaced(client);
 
     let store = reflector::store::Writer::<Deployment>::default();
-    let reader = store.as_reader(); // queriable state for actix
+    let reader = store.as_reader(); // queriable state for Axum
     let rf = reflector(store, watcher(api, Default::default()));
     // need to run/drain the reflector - so utilize the for_each to log toucheds
     let drainer = try_flatten_touched(rf)
@@ -91,23 +131,25 @@ async fn main() -> std::io::Result<()> {
         });
 
     //let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
-    let server = HttpServer::new(move || {
-        App::new()
-            .app_data(Data::new(reader.clone()))
-            .wrap(middleware::Logger::default().exclude("/health"))
-            //.wrap(prometheus.clone())
-            .service(get_versions)
-            .service(get_version)
-            .service(health)
-    })
-    .bind("0.0.0.0:8000")
-    .expect("bind to 0.0.0.0:8000")
-    .shutdown_timeout(5)
-    .run();
+    let app = Router::new()
+        .route("/versions", get(get_versions))
+        .route("/versions/:namespace/:name", get(get_version))
+        .layer(AddExtensionLayer::new(reader.clone()))
+        .layer(TraceLayer::new_for_http())
+        .boxed()
+        // Reminder: routes added *after* TraceLayer are not subject to its logging behavior
+        .route("/health", get(health));
+
+    let mut shutdown = signal(SignalKind::terminate()).expect("could not monitor for SIGTERM");
+    let server = axum::Server::bind(&SocketAddr::from(([0, 0, 0, 0], 8000)))
+        .serve(app.into_make_service())
+        .with_graceful_shutdown(async move {
+            shutdown.recv().await;
+        });
 
     tokio::select! {
         _ = drainer => warn!("reflector drained"),
-        _ = server => info!("actix exited"),
+        _ = server => info!("axum exited"),
     }
     Ok(())
 }
