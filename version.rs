@@ -18,10 +18,7 @@ use kube::{
     Api, Client, ResourceExt,
 };
 use serde::Serialize;
-use std::{
-    convert::{Infallible, TryFrom},
-    net::SocketAddr,
-};
+use std::{convert::Infallible, net::SocketAddr};
 use tokio::signal::unix::{signal, SignalKind};
 use tower_http::trace::TraceLayer;
 #[allow(unused_imports)]

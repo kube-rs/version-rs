@@ -2,7 +2,7 @@
 name = "version"
 version = "1.11.0"
 authors = ["Eirik Albrigtsen <sszynrae@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0"
 publish = false
 
