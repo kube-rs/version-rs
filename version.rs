@@ -106,7 +106,6 @@ async fn get_version(
 }
 
 // Intended route: /health
-#[instrument]
 async fn health() -> (StatusCode, Json<&'static str>) {
     (StatusCode::OK, Json("healthy"))
 }
