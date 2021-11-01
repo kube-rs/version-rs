@@ -3,7 +3,7 @@
 [![docker image](https://img.shields.io/docker/pulls/clux/version.svg)](
 https://hub.docker.com/r/clux/version/tags/)
 
-An example kube deployment reflector and actix web server in ~100 lines of rust. It exposes a simple version api for deployments on `/versions`.
+An example kube deployment reflector and [axum](https://github.com/tokio-rs/axum) web server in ~100 lines of rust. It exposes a simple version api for deployments on `/versions`.
 
 ## Usage
 Clone the repo and either run locally or deploy into a cluster:
@@ -29,7 +29,7 @@ $ curl 0.0.0.0:8000/versions/default/foo-controller
 {"container":"clux/controller","name":"foo-controller","version":"latest"}
 ```
 
-and its metrics (currently disabled due to actix upgrade issues):
+and its metrics (previously disabled due to `actix-web` upgrade issues, now omitted due to missing Axum/`prometheus` integration):
 
 ```sh
 $ curl 0.0.0.0:8000/metrics
