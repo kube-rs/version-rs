@@ -1,9 +1,9 @@
 use axum::{
     body::{Bytes, Full},
     extract::{Extension, Path},
-    handler::get,
     http::{Response, StatusCode},
     response::IntoResponse,
+    routing::get,
     AddExtensionLayer, Json, Router,
 };
 use futures::StreamExt;
@@ -132,7 +132,6 @@ async fn main() -> std::io::Result<()> {
         .route("/versions/:namespace/:name", get(get_version))
         .layer(AddExtensionLayer::new(reader.clone()))
         .layer(TraceLayer::new_for_http())
-        .boxed()
         // Reminder: routes added *after* TraceLayer are not subject to its logging behavior
         .route("/health", get(health));
 
