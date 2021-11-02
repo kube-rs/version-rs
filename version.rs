@@ -1,13 +1,11 @@
 use axum::{
-    body::{Bytes, Full},
     extract::{Extension, Path},
-    http::{Response, StatusCode},
-    response::IntoResponse,
+    http::StatusCode,
     routing::get,
     AddExtensionLayer, Json, Router,
 };
 use futures::StreamExt;
-use k8s_openapi::{api::apps::v1::Deployment, serde_json::json};
+use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
     runtime::{
         reflector,
@@ -18,7 +16,7 @@ use kube::{
     Api, Client, ResourceExt,
 };
 use serde::Serialize;
-use std::{convert::Infallible, net::SocketAddr};
+use std::net::SocketAddr;
 use tokio::signal::unix::{signal, SignalKind};
 use tower_http::trace::TraceLayer;
 #[allow(unused_imports)]
@@ -54,28 +52,6 @@ impl TryFrom<Deployment> for Entry {
     }
 }
 
-#[derive(Debug)]
-enum Error {
-    NotFound,
-}
-
-impl IntoResponse for Error {
-    type Body = Full<Bytes>;
-    type BodyError = Infallible;
-
-    fn into_response(self) -> Response<Self::Body> {
-        let (status, error_message) = match self {
-            Error::NotFound => (StatusCode::NOT_FOUND, "not found"),
-        };
-
-        let body = Json(json!({
-            "error": error_message,
-        }));
-
-        (status, body).into_response()
-    }
-}
-
 // Intended route: /versions
 #[instrument(skip(store))]
 async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
@@ -92,14 +68,14 @@ async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
 async fn get_version(
     store: Extension<Store<Deployment>>,
     Path((namespace, name)): Path<(String, String)>,
-) -> std::result::Result<Json<Entry>, Error> {
+) -> std::result::Result<Json<Entry>, (StatusCode, &'static str)> {
     let key = ObjectRef::new(&name).within(&namespace);
     if let Some(d) = store.get(&key) {
         if let Ok(e) = Entry::try_from(d) {
             return Ok(Json(e));
         }
     }
-    Err(Error::NotFound)
+    Err((StatusCode::NOT_FOUND, "not found"))
 }
 
 // Intended route: /health
