@@ -29,21 +29,6 @@ $ curl 0.0.0.0:8000/versions/default/foo-controller
 {"container":"clux/controller","name":"foo-controller","version":"latest"}
 ```
 
-and its metrics (previously disabled due to `actix-web` upgrade issues, now omitted due to missing Axum/`prometheus` integration):
-
-```sh
-$ curl 0.0.0.0:8000/metrics
-api_http_requests_duration_seconds_bucket{endpoint="/",method="GET",status="200",le="0.005"} 11
-...
-...
-api_http_requests_duration_seconds_bucket{endpoint="/",method="GET",status="200",le="+Inf"} 11
-api_http_requests_duration_seconds_sum{endpoint="/",method="GET",status="200"} 0.001559851
-api_http_requests_duration_seconds_count{endpoint="/",method="GET",status="200"} 11
-# HELP api_http_requests_total Total number of HTTP requests
-# TYPE api_http_requests_total counter
-api_http_requests_total{endpoint="/",method="GET",status="200"} 11
-```
-
 ## Developing
 - Locally against a cluster: `cargo run`
 - In-cluster: edit and `tilt up` [*](https://tilt.dev/)
