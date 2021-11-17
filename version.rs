@@ -52,7 +52,7 @@ impl TryFrom<Deployment> for Entry {
     }
 }
 
-// Intended route: /versions
+// GET /versions
 #[instrument(skip(store))]
 async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
     let state: Vec<Entry> = store
@@ -63,7 +63,7 @@ async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
     Json(state)
 }
 
-// Intended route: /versions/<namespace>/<name>
+// GET /versions/<namespace>/<name>
 #[instrument(skip(store))]
 async fn get_version(
     store: Extension<Store<Deployment>>,
@@ -78,13 +78,13 @@ async fn get_version(
     Err((StatusCode::NOT_FOUND, "not found"))
 }
 
-// Intended route: /health
+// GET /health
 async fn health() -> (StatusCode, Json<&'static str>) {
     (StatusCode::OK, Json("healthy"))
 }
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::DEBUG)
         .init();
@@ -94,7 +94,7 @@ async fn main() -> std::io::Result<()> {
     let store = reflector::store::Writer::<Deployment>::default();
     let reader = store.as_reader(); // queriable state for Axum
     let rf = reflector(store, watcher(api, Default::default()));
-    // need to run/drain the reflector - so utilize the for_each to log toucheds
+    // need to run/drain the reflector - so utilize the for_each to log deployment watch events
     let drainer = try_flatten_touched(rf)
         .filter_map(|x| async move { std::result::Result::ok(x) })
         .for_each(|o| {
@@ -102,7 +102,6 @@ async fn main() -> std::io::Result<()> {
             futures::future::ready(())
         });
 
-    //let prometheus = PrometheusMetrics::new("api", Some("/metrics"), None);
     let app = Router::new()
         .route("/versions", get(get_versions))
         .route("/versions/:namespace/:name", get(get_version))
