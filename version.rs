@@ -46,6 +46,13 @@ impl TryFrom<Deployment> for Entry {
                     container: splits[0].to_string(),
                     version: splits[1].to_string(),
                 });
+            } else {
+                return Ok(Entry {
+                    name,
+                    namespace,
+                    container: img.to_string(),
+                    version: String::from("latest"),
+                });
             }
         }
         Err(anyhow::anyhow!("Failed to parse deployment {}", name))
