@@ -86,19 +86,14 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::DEBUG)
         .init();
-    let client = Client::try_default().await.expect("create client");
+    let client = Client::try_default().await?;
     let api: Api<Deployment> = Api::default_namespaced(client);
 
     let store = reflector::store::Writer::<Deployment>::default();
     let reader = store.as_reader(); // queriable state for Axum
     let rf = reflector(store, watcher(api, Default::default()));
-    // need to run/drain the reflector - so utilize the for_each to log deployment watch events
-    let drainer = try_flatten_touched(rf)
-        .filter_map(|x| async move { std::result::Result::ok(x) })
-        .for_each(|o| {
-            debug!("Touched {:?}", o.name());
-            futures::future::ready(())
-        });
+    // need to run/drain the reflector:
+    let drainer = try_flatten_touched(rf).for_each(|_o| futures::future::ready(()));
 
     let app = Router::new()
         .route("/versions", get(get_versions))
@@ -108,7 +103,7 @@ async fn main() -> Result<()> {
         // Reminder: routes added *after* TraceLayer are not subject to its logging behavior
         .route("/health", get(health));
 
-    let mut shutdown = signal(SignalKind::terminate()).expect("could not monitor for SIGTERM");
+    let mut shutdown = signal(SignalKind::terminate())?;
     let server = axum::Server::bind(&SocketAddr::from(([0, 0, 0, 0], 8000)))
         .serve(app.into_make_service())
         .with_graceful_shutdown(async move {
