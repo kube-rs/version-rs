@@ -1,10 +1,9 @@
 use axum::{
     extract::{Extension, Path},
     http::StatusCode,
-    routing::get,
-    AddExtensionLayer, Json, Router,
+    routing, AddExtensionLayer, Json, Router,
 };
-use futures::StreamExt;
+use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
     runtime::{
@@ -14,11 +13,9 @@ use kube::{
     },
     Api, Client, ResourceExt,
 };
-use std::net::SocketAddr;
-use tokio::signal::unix::{signal, SignalKind};
 use tower_http::trace::TraceLayer;
 #[allow(unused_imports)]
-use tracing::{debug, error, info, instrument, trace, warn};
+use tracing::{debug, error, info, instrument, trace, warn, Level};
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 
@@ -83,9 +80,7 @@ async fn health() -> (StatusCode, Json<&'static str>) {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
-        .init();
+    tracing_subscriber::fmt().with_max_level(Level::DEBUG).init();
     let client = Client::try_default().await?;
     let api: Api<Deployment> = Api::default_namespaced(client);
 
@@ -93,18 +88,19 @@ async fn main() -> Result<()> {
     let reader = store.as_reader(); // queriable state for Axum
     let rf = reflector(store, watcher(api, Default::default()));
     // need to run/drain the reflector:
-    let drainer = try_flatten_touched(rf).for_each(|_o| futures::future::ready(()));
+    let drainer = try_flatten_touched(rf).for_each(|_o| future::ready(()));
 
     let app = Router::new()
-        .route("/versions", get(get_versions))
-        .route("/versions/:namespace/:name", get(get_version))
+        .route("/versions", routing::get(get_versions))
+        .route("/versions/:namespace/:name", routing::get(get_version))
         .layer(AddExtensionLayer::new(reader.clone()))
         .layer(TraceLayer::new_for_http())
         // Reminder: routes added *after* TraceLayer are not subject to its logging behavior
-        .route("/health", get(health));
+        .route("/health", routing::get(health));
 
-    let mut shutdown = signal(SignalKind::terminate())?;
-    let server = axum::Server::bind(&SocketAddr::from(([0, 0, 0, 0], 8000)))
+    use tokio::signal::unix as usig;
+    let mut shutdown = usig::signal(usig::SignalKind::terminate())?;
+    let server = axum::Server::bind(&std::net::SocketAddr::from(([0, 0, 0, 0], 8000)))
         .serve(app.into_make_service())
         .with_graceful_shutdown(async move {
             shutdown.recv().await;
