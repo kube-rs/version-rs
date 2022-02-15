@@ -8,14 +8,12 @@ use futures::StreamExt;
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
     runtime::{
-        reflector,
-        reflector::{ObjectRef, Store},
+        reflector::{self, reflector, ObjectRef, Store},
         utils::try_flatten_touched,
         watcher,
     },
     Api, Client, ResourceExt,
 };
-use serde::Serialize;
 use std::net::SocketAddr;
 use tokio::signal::unix::{signal, SignalKind};
 use tower_http::trace::TraceLayer;
@@ -24,36 +22,29 @@ use tracing::{debug, error, info, instrument, trace, warn};
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 
-#[derive(Serialize, Clone)]
+#[derive(serde::Serialize, Clone)]
 pub struct Entry {
     container: String,
     name: String,
     namespace: String,
     version: String,
 }
-impl TryFrom<Deployment> for Entry {
+impl TryFrom<&Deployment> for Entry {
     type Error = anyhow::Error;
 
-    fn try_from(d: Deployment) -> Result<Self> {
+    fn try_from(d: &Deployment) -> Result<Self> {
         let name = d.name();
-        let namespace = d.namespace().unwrap();
-        if let Some(ref img) = d.spec.unwrap().template.spec.unwrap().containers[0].image {
-            if img.contains(':') {
-                let splits: Vec<_> = img.split(':').collect();
-                return Ok(Entry {
-                    name,
-                    namespace,
-                    container: splits[0].to_string(),
-                    version: splits[1].to_string(),
-                });
-            } else {
-                return Ok(Entry {
-                    name,
-                    namespace,
-                    container: img.to_string(),
-                    version: String::from("latest"),
-                });
-            }
+        let namespace = d.namespace().clone().unwrap();
+        let spec = d.spec.as_ref().unwrap().template.spec.as_ref().unwrap();
+        if let Some(img) = spec.containers[0].image.clone() {
+            // main container only
+            let split: Vec<_> = img.splitn(2, ':').collect();
+            let (container, version) = match *split.as_slice() {
+                [c, v] => (c.to_string(), v.to_string()),
+                [c] => (c.to_string(), "latest".to_string()),
+                _ => anyhow::bail!("missing container.image on {}", name),
+            };
+            return Ok(Entry { name, namespace, container, version });
         }
         Err(anyhow::anyhow!("Failed to parse deployment {}", name))
     }
@@ -65,7 +56,7 @@ async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
     let state: Vec<Entry> = store
         .state()
         .into_iter()
-        .filter_map(|d| Entry::try_from(d).ok())
+        .filter_map(|d| Entry::try_from(d.as_ref()).ok())
         .collect();
     Json(state)
 }
@@ -78,7 +69,7 @@ async fn get_version(
 ) -> std::result::Result<Json<Entry>, (StatusCode, &'static str)> {
     let key = ObjectRef::new(&name).within(&namespace);
     if let Some(d) = store.get(&key) {
-        if let Ok(e) = Entry::try_from(d) {
+        if let Ok(e) = Entry::try_from(d.as_ref()) {
             return Ok(Json(e));
         }
     }

@@ -6,3 +6,4 @@ blank_lines_upper_bound = 2
 comment_width = 110
 max_width = 110
 inline_attribute_width = 80
+struct_lit_width = 60
