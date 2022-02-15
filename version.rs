@@ -34,7 +34,6 @@ impl TryFrom<&Deployment> for Entry {
         let namespace = d.namespace().clone().unwrap();
         let spec = d.spec.as_ref().unwrap().template.spec.as_ref().unwrap();
         if let Some(img) = spec.containers[0].image.clone() {
-            // main container only
             let split: Vec<_> = img.splitn(2, ':').collect();
             let (container, version) = match *split.as_slice() {
                 [c, v] => (c.to_string(), v.to_string()),
