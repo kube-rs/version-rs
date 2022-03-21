@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path},
     http::StatusCode,
-    routing, Json, Router
+    routing, Json, Router,
 };
 use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
@@ -13,7 +13,6 @@ use kube::{
     },
     Api, Client, ResourceExt,
 };
-use tower_http::trace::TraceLayer;
 #[allow(unused_imports)]
 use tracing::{debug, error, info, instrument, trace, warn, Level};
 
@@ -88,7 +87,7 @@ async fn main() -> Result<()> {
         .route("/versions", routing::get(get_versions))
         .route("/versions/:namespace/:name", routing::get(get_version))
         .layer(Extension(reader.clone()))
-        .layer(TraceLayer::new_for_http())
+        .layer(tower_http::trace::TraceLayer::new_for_http())
         // Reminder: routes added *after* TraceLayer are not subject to its logging behavior
         .route("/health", routing::get(health));
 
