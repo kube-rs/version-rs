@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path},
     http::StatusCode,
-    routing, AddExtensionLayer, Json, Router,
+    routing, Json, Router
 };
 use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
@@ -17,7 +17,7 @@ use tower_http::trace::TraceLayer;
 #[allow(unused_imports)]
 use tracing::{debug, error, info, instrument, trace, warn, Level};
 
-type Result<T> = std::result::Result<T, anyhow::Error>;
+type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
 
 #[derive(serde::Serialize, Clone)]
 pub struct Entry {
@@ -26,35 +26,25 @@ pub struct Entry {
     namespace: String,
     version: String,
 }
-impl TryFrom<&Deployment> for Entry {
-    type Error = anyhow::Error;
-
-    fn try_from(d: &Deployment) -> Result<Self> {
-        let name = d.name();
-        let namespace = d.namespace().clone().unwrap();
-        let spec = d.spec.as_ref().unwrap().template.spec.as_ref().unwrap();
-        if let Some(img) = spec.containers[0].image.clone() {
-            let split: Vec<_> = img.splitn(2, ':').collect();
-            let (container, version) = match *split.as_slice() {
-                [c, v] => (c.to_string(), v.to_string()),
-                [c] => (c.to_string(), "latest".to_string()),
-                _ => anyhow::bail!("missing container.image on {}", name),
-            };
-            return Ok(Entry { name, namespace, container, version });
-        }
-        Err(anyhow::anyhow!("Failed to parse deployment {}", name))
-    }
+fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
+    let name = d.name();
+    let namespace = d.namespace()?;
+    let tpl = d.spec.as_ref()?.template.spec.as_ref()?;
+    let img = tpl.containers.get(0)?.image.as_ref()?;
+    let splits = img.splitn(2, ':').collect::<Vec<_>>();
+    let (container, version) = match *splits.as_slice() {
+        [c, v] => (c.to_string(), v.to_string()),
+        [c] => (c.to_string(), "latest".to_string()),
+        _ => return None,
+    };
+    Some(Entry { name, namespace, container, version })
 }
 
 // GET /versions
 #[instrument(skip(store))]
 async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
-    let state: Vec<Entry> = store
-        .state()
-        .into_iter()
-        .filter_map(|d| Entry::try_from(d.as_ref()).ok())
-        .collect();
-    Json(state)
+    let data = store.state().iter().filter_map(|d| deployment_to_entry(d)).collect();
+    Json(data)
 }
 
 // GET /versions/<namespace>/<name>
@@ -62,10 +52,10 @@ async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
 async fn get_version(
     store: Extension<Store<Deployment>>,
     Path((namespace, name)): Path<(String, String)>,
-) -> std::result::Result<Json<Entry>, (StatusCode, &'static str)> {
+) -> Result<Json<Entry>, (StatusCode, &'static str)> {
     let key = ObjectRef::new(&name).within(&namespace);
     if let Some(d) = store.get(&key) {
-        if let Ok(e) = Entry::try_from(d.as_ref()) {
+        if let Some(e) = deployment_to_entry(&d) {
             return Ok(Json(e));
         }
     }
@@ -86,13 +76,18 @@ async fn main() -> Result<()> {
     let store = reflector::store::Writer::<Deployment>::default();
     let reader = store.as_reader(); // queriable state for Axum
     let rf = reflector(store, watcher(api, Default::default()));
-    // need to run/drain the reflector:
-    let drainer = try_flatten_touched(rf).for_each(|_o| future::ready(()));
+    // need to run/drain the reflector - so utilize the for_each to log deployment watch events
+    let drainer = try_flatten_touched(rf)
+        .filter_map(|x| async move { Result::ok(x) })
+        .for_each(|o| {
+            debug!("Saw {:?}", o.name());
+            future::ready(())
+        });
 
     let app = Router::new()
         .route("/versions", routing::get(get_versions))
         .route("/versions/:namespace/:name", routing::get(get_version))
-        .layer(AddExtensionLayer::new(reader.clone()))
+        .layer(Extension(reader.clone()))
         .layer(TraceLayer::new_for_http())
         // Reminder: routes added *after* TraceLayer are not subject to its logging behavior
         .route("/health", routing::get(health));
