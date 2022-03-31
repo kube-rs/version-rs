@@ -1,8 +1,5 @@
-use axum::{
-    extract::{Extension, Path},
-    http::StatusCode,
-    routing, Json, Router,
-};
+use axum::{extract::Extension, http::StatusCode, response::IntoResponse, routing, Json, Router};
+use axum_extra::routing::TypedPath;
 use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
@@ -13,13 +10,12 @@ use kube::{
     },
     Api, Client, ResourceExt,
 };
-#[allow(unused_imports)]
-use tracing::{debug, error, info, instrument, trace, warn, Level};
+use tracing::*;
 
 type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
 
 #[derive(serde::Serialize, Clone)]
-pub struct Entry {
+struct Entry {
     container: String,
     name: String,
     namespace: String,
@@ -39,20 +35,22 @@ fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
     Some(Entry { name, namespace, container, version })
 }
 
-// GET /versions
 #[instrument(skip(store))]
 async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
     let data = store.state().iter().filter_map(|d| deployment_to_entry(d)).collect();
     Json(data)
 }
 
-// GET /versions/<namespace>/<name>
+#[derive(TypedPath, serde::Deserialize, Debug)]
+#[typed_path("/versions/:namespace/:name")]
+struct EntryPath {
+    name: String,
+    namespace: String,
+}
+
 #[instrument(skip(store))]
-async fn get_version(
-    store: Extension<Store<Deployment>>,
-    Path((namespace, name)): Path<(String, String)>,
-) -> Result<Json<Entry>, (StatusCode, &'static str)> {
-    let key = ObjectRef::new(&name).within(&namespace);
+async fn get_version(store: Extension<Store<Deployment>>, path: EntryPath) -> impl IntoResponse {
+    let key = ObjectRef::new(&path.name).within(&path.namespace);
     if let Some(d) = store.get(&key) {
         if let Some(e) = deployment_to_entry(&d) {
             return Ok(Json(e));
@@ -61,9 +59,8 @@ async fn get_version(
     Err((StatusCode::NOT_FOUND, "not found"))
 }
 
-// GET /health
-async fn health() -> (StatusCode, Json<&'static str>) {
-    (StatusCode::OK, Json("healthy"))
+async fn health() -> impl IntoResponse {
+    Json("healthy")
 }
 
 #[tokio::main]
