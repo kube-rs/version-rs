@@ -10,8 +10,7 @@ use kube::{
     },
     Api, Client, ResourceExt,
 };
-#[allow(unused_imports)]
-use tracing::{debug, error, info, instrument, trace, warn, Level};
+use tracing::*;
 
 type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
 
@@ -61,7 +60,7 @@ async fn get_version(store: Extension<Store<Deployment>>, path: EntryPath) -> im
 }
 
 async fn health() -> impl IntoResponse {
-    (StatusCode::OK, Json("healthy"))
+    Json("healthy")
 }
 
 #[tokio::main]
