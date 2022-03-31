@@ -12,7 +12,7 @@ name = "version"
 path = "version.rs"
 
 [dependencies]
-axum = "0.4.8"
+axum = "0.5.0"
 futures = "0.3.21"
 tokio = { version = "1.17.0", features = ["macros", "rt-multi-thread", "signal"] }
 k8s-openapi = { version = "0.14.0", features = ["v1_22"] }
@@ -21,6 +21,7 @@ anyhow = "1.0.56"
 tower-http = { version = "0.2.5", default-features = false, features = ["trace"] }
 tracing = "0.1.32"
 tracing-subscriber = "0.3.9"
+axum-extra = { version = "0.2.0", features = ["typed-routing"] }
 
 [dependencies.kube]
 version = "0.70.0"
