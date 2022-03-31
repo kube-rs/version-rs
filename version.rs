@@ -1,5 +1,5 @@
 use axum::{extract::Extension, http::StatusCode, response::IntoResponse, routing, Json, Router};
-use axum_extra::routing::{RouterExt, TypedPath};
+use axum_extra::routing::TypedPath;
 use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
@@ -36,10 +36,8 @@ fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
     Some(Entry { name, namespace, container, version })
 }
 
-type Cache = Store<Deployment>;
-
 #[instrument(skip(store))]
-async fn get_versions(store: Extension<Cache>) -> Json<Vec<Entry>> {
+async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
     let data = store.state().iter().filter_map(|d| deployment_to_entry(d)).collect();
     Json(data)
 }
@@ -52,7 +50,7 @@ struct EntryPath {
 }
 
 #[instrument(skip(store))]
-async fn get_version(store: Extension<Cache>, path: EntryPath) -> impl IntoResponse {
+async fn get_version(store: Extension<Store<Deployment>>, path: EntryPath) -> impl IntoResponse {
     let key = ObjectRef::new(&path.name).within(&path.namespace);
     if let Some(d) = store.get(&key) {
         if let Some(e) = deployment_to_entry(&d) {
@@ -62,7 +60,6 @@ async fn get_version(store: Extension<Cache>, path: EntryPath) -> impl IntoRespo
     Err((StatusCode::NOT_FOUND, "not found"))
 }
 
-// GET /health
 async fn health() -> impl IntoResponse {
     (StatusCode::OK, Json("healthy"))
 }
@@ -88,7 +85,6 @@ async fn main() -> Result<()> {
         .route("/versions", routing::get(get_versions))
         .route("/versions/:namespace/:name", routing::get(get_version))
         .layer(Extension(reader.clone()))
-        .typed_get(get_versions)
         .layer(tower_http::trace::TraceLayer::new_for_http())
         // Reminder: routes added *after* TraceLayer are not subject to its logging behavior
         .route("/health", routing::get(health));
