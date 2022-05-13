@@ -3,15 +3,10 @@ use axum_extra::routing::TypedPath;
 use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::{
-    runtime::{
-        reflector::{self, reflector, ObjectRef, Store},
-        utils::try_flatten_touched,
-        watcher,
-    },
+    runtime::{reflector, watcher, WatchStreamExt},
     Api, Client, ResourceExt,
 };
 use tracing::*;
-
 type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
 
 #[derive(serde::Serialize, Clone)]
@@ -36,7 +31,7 @@ fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
 }
 
 #[instrument(skip(store))]
-async fn get_versions(store: Extension<Store<Deployment>>) -> Json<Vec<Entry>> {
+async fn get_versions(store: Extension<reflector::Store<Deployment>>) -> Json<Vec<Entry>> {
     let data = store.state().iter().filter_map(|d| deployment_to_entry(d)).collect();
     Json(data)
 }
@@ -49,12 +44,10 @@ struct EntryPath {
 }
 
 #[instrument(skip(store))]
-async fn get_version(store: Extension<Store<Deployment>>, path: EntryPath) -> impl IntoResponse {
-    let key = ObjectRef::new(&path.name).within(&path.namespace);
-    if let Some(d) = store.get(&key) {
-        if let Some(e) = deployment_to_entry(&d) {
-            return Ok(Json(e));
-        }
+async fn get_version(store: Extension<reflector::Store<Deployment>>, path: EntryPath) -> impl IntoResponse {
+    let key = reflector::ObjectRef::new(&path.name).within(&path.namespace);
+    if let Some(Some(e)) = store.get(&key).map(|d| deployment_to_entry(&d)) {
+        return Ok(Json(e));
     }
     Err((StatusCode::NOT_FOUND, "not found"))
 }
@@ -67,16 +60,15 @@ async fn health() -> impl IntoResponse {
 async fn main() -> Result<()> {
     tracing_subscriber::fmt().with_max_level(Level::DEBUG).init();
     let client = Client::try_default().await?;
-    let api: Api<Deployment> = Api::default_namespaced(client);
+    let api: Api<Deployment> = Api::all(client);
 
-    let store = reflector::store::Writer::<Deployment>::default();
-    let reader = store.as_reader(); // queriable state for Axum
-    let rf = reflector(store, watcher(api, Default::default()));
-    // need to run/drain the reflector - so utilize the for_each to log deployment watch events
-    let drainer = try_flatten_touched(rf)
+    let (reader, writer) = reflector::store();
+    // start and run the reflector
+    let watch = reflector(writer, watcher(api, Default::default()))
+        .touched_objects()
         .filter_map(|x| async move { Result::ok(x) })
         .for_each(|o| {
-            debug!("Saw {:?}", o.name());
+            debug!("Saw {} in {}", o.name(), o.namespace().unwrap());
             future::ready(())
         });
 
@@ -97,7 +89,7 @@ async fn main() -> Result<()> {
         });
 
     tokio::select! {
-        _ = drainer => warn!("reflector drained"),
+        _ = watch => warn!("reflector exited"),
         _ = server => info!("axum exited"),
     }
     Ok(())

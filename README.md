@@ -3,7 +3,7 @@
 [![docker image](https://img.shields.io/docker/pulls/clux/version.svg)](
 https://hub.docker.com/r/clux/version/tags/)
 
-An example kube deployment reflector and [axum](https://github.com/tokio-rs/axum) web server in ~100 lines of rust. It exposes a simple version api for deployments on `/versions`.
+An example kube deployment reflector and [axum](https://github.com/tokio-rs/axum) web server in <100 lines of rust. It exposes a simple version api for deployments on `/versions`.
 
 ## Usage
 Clone the repo and either run locally or deploy into a cluster:
