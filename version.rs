@@ -17,7 +17,7 @@ struct Entry {
     version: String,
 }
 fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
-    let name = d.name();
+    let name = d.name_any();
     let namespace = d.namespace()?;
     let tpl = d.spec.as_ref()?.template.spec.as_ref()?;
     let img = tpl.containers.get(0)?.image.as_ref()?;
@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
         .touched_objects()
         .filter_map(|x| async move { Result::ok(x) })
         .for_each(|o| {
-            debug!("Saw {} in {}", o.name(), o.namespace().unwrap());
+            debug!("Saw {} in {}", o.name_any(), o.namespace().unwrap());
             future::ready(())
         });
 
