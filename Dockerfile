@@ -6,7 +6,7 @@ RUN --mount=type=cache,target=/volume/target \
     cargo build --release --bin version && \
     mv /volume/target/x86_64-unknown-linux-musl/release/version .
 
-FROM gcr.io/distroless/static:nonroot
+FROM cgr.dev/chainguard/static
 COPY --from=builder --chown=nonroot:nonroot /volume/version /app/
 EXPOSE 8080
 ENTRYPOINT ["/app/version"]
