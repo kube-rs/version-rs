@@ -3,8 +3,8 @@ name: ci
 on:
   pull_request:
   push:
-    branches:
-      - main
+    #branches:
+    #  - main
 
 env:
   IMAGE: clux/version
@@ -13,7 +13,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Prepare image tags
         id: prep
         run: |
@@ -21,12 +21,12 @@ jobs:
           IMAGE="${{ env.IMAGE }}"
           if curl -sSL https://registry.hub.docker.com/v1/repositories/${IMAGE}/tags | jq -r ".[].name" | grep -q ${TAG}; then
             echo "Semver tag ${TAG} already exists - not publishing"
-            echo ::set-output name=tags::${IMAGE}:latest
+            echo "tags=${IMAGE}:latest" >> $GITHUB_OUTPUT
           else
             echo "Semver tag ${TAG} not found - publishing"
-            echo ::set-output name=tags::${IMAGE}:latest,${IMAGE}:${TAG}
+            echo "tags=${IMAGE}:latest,${IMAGE}:${TAG}" >> $GITHUB_OUTPUT
           fi
-          echo ::set-output name=semver::${TAG}
+          echo "tags=${TAG}" >> $GITHUB_OUTPUT
 
       - uses: docker/setup-buildx-action@v1
         id: buildx
@@ -85,14 +85,14 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly
           components: rustfmt,clippy
-          override: true
-      - name: Run rustfmt
-        run: cargo +nightly fmt -- --check
-      - uses: actions-rs/clippy-check@v1
+      - run: cargo +nightly fmt -- --check
+
+      - uses: giraffate/clippy-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: 'github-pr-review'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
