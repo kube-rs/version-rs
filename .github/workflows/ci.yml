@@ -3,8 +3,8 @@ name: ci
 on:
   pull_request:
   push:
-    #branches:
-    #  - main
+    branches:
+      - main
 
 env:
   IMAGE: clux/version
@@ -22,8 +22,7 @@ jobs:
           echo "semver=${TAG}" >> $GITHUB_OUTPUT
           if curl -sSL https://registry.hub.docker.com/v1/repositories/${IMAGE}/tags | jq -r ".[].name" | grep -q ${TAG}; then
             echo "Semver tag ${TAG} already exists - not publishing"
-            echo "enable_semver=true" >> $GITHUB_OUTPUT
-            # TODO: false
+            echo "enable_semver=false" >> $GITHUB_OUTPUT
           else
             echo "Semver tag ${TAG} not found - publishing"
             echo "enable_semver=true" >> $GITHUB_OUTPUT
@@ -50,33 +49,26 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Go Build Cache for Docker
-        uses: actions/cache@v3
-        with:
-          path: rust-cache
-          key: ${{ runner.os }}-rust-cache-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: inject rust-cache into docker
-        uses: overmindtech/buildkit-cache-dance/inject@main
-        with:
-          cache-source: rust-cache
+      # - name: Cache Docker layers
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: /tmp/.buildx-cache
+      #     key: ${{ runner.os }}-buildx-${{ steps.prep.outputs.semver }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-buildx-
 
       - uses: docker/build-push-action@v4
         with:
           context: .
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # official experimental: https://docs.docker.com/build/ci/github-actions/cache/#github-cache
+          cache-from: type=gha,scope=version6
+          cache-to: type=gha,scope=version6,mode=max
           #push: ${{ github.ref == 'refs/heads/main' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # TODO: append ,linux/arm64
           platforms: linux/amd64
-
-      - name: extract rust-cache from docker
-        uses: overmindtech/buildkit-cache-dance/extract@main
-        with:
-          cache-source: rust-cache
 
   lint:
     runs-on: ubuntu-latest
