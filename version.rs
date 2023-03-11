@@ -65,6 +65,7 @@ async fn main() -> Result<()> {
     let (reader, writer) = reflector::store();
     // start and run the reflector
     let watch = reflector(writer, watcher(api, Default::default()))
+        .backoff(backoff::ExponentialBackoff::default())
         .touched_objects()
         .filter_map(|x| async move { Result::ok(x) })
         .for_each(|o| {
@@ -88,9 +89,6 @@ async fn main() -> Result<()> {
             shutdown.recv().await;
         });
 
-    tokio::select! {
-        _ = watch => warn!("reflector exited"),
-        _ = server => info!("axum exited"),
-    }
+    let _res = tokio::join!(watch, server); // shutdown when both have handled termination
     Ok(())
 }
