@@ -75,14 +75,11 @@ spec:
     metadata:
       labels:
         app: version
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8000"
     spec:
       serviceAccountName: version
       containers:
       - name: version
-        image: "clux/version:latest"
+        image: clux/version:latest
         imagePullPolicy: Always
         resources:
           limits:
