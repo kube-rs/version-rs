@@ -44,18 +44,10 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - uses: docker/login-action@v2
-        #if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # - name: Cache Docker layers
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: /tmp/.buildx-cache
-      #     key: ${{ runner.os }}-buildx-${{ steps.prep.outputs.semver }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-buildx-
 
       - uses: docker/build-push-action@v4
         with:
@@ -63,8 +55,7 @@ jobs:
           # official experimental: https://docs.docker.com/build/ci/github-actions/cache/#github-cache
           cache-from: type=gha,scope=version6
           cache-to: type=gha,scope=version6,mode=max
-          #push: ${{ github.ref == 'refs/heads/main' }}
-          push: true
+          push: ${{ github.ref == 'refs/heads/main' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # TODO: append ,linux/arm64
