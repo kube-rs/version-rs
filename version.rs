@@ -89,6 +89,6 @@ async fn main() -> Result<()> {
             shutdown.recv().await;
         });
 
-    let _res = tokio::join!(watch, server); // shutdown when both have handled termination
+    tokio::join!(watch, server).1?; // shutdown when both have handled termination
     Ok(())
 }
