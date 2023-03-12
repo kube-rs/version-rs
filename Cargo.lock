@@ -297,6 +297,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
 
 [[package]]
+name = "elegant-departure"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "91cdb1d8cbd0b09f0e7aca109eacc30b25802e37c0eb7e45ebdb28f61ac181ff"
+dependencies = [
+ "futures",
+ "lazy_static",
+ "pin-project-lite",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1573,6 +1586,7 @@ dependencies = [
  "axum",
  "axum-extra",
  "backoff",
+ "elegant-departure",
  "futures",
  "k8s-openapi",
  "kube",

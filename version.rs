@@ -81,14 +81,14 @@ async fn main() -> Result<()> {
         // Reminder: routes added *after* TraceLayer are not subject to its logging behavior
         .route("/health", routing::get(health));
 
-    use tokio::signal::unix as usig;
-    let mut shutdown = usig::signal(usig::SignalKind::terminate())?;
     let server = axum::Server::bind(&std::net::SocketAddr::from(([0, 0, 0, 0], 8000)))
         .serve(app.into_make_service())
-        .with_graceful_shutdown(async move {
-            shutdown.recv().await;
-        });
+        .with_graceful_shutdown(elegant_departure::tokio::depart().on_ctrl_c());
 
-    tokio::join!(watch, server).1?; // shutdown when both have handled termination
+    // watch stays up forever, so only wait for one of these to finish
+    tokio::select! {
+        _ = watch => warn!("watch exited"),
+       _ = server => info!("axum exited"),
+    };
     Ok(())
 }
