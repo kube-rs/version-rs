@@ -1,6 +1,6 @@
 [package]
 name = "version"
-version = "1.13.0"
+version = "1.14.0"
 authors = ["Eirik Albrigtsen <sszynrae@gmail.com>"]
 edition = "2021"
 license = "Apache-2.0"
