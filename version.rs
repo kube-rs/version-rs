@@ -63,7 +63,6 @@ async fn main() -> Result<()> {
     let api: Api<Deployment> = Api::all(client);
 
     let (reader, writer) = reflector::store();
-    // start and run the reflector
     let watch = reflector(writer, watcher(api, Default::default()))
         .backoff(backoff::ExponentialBackoff::default())
         .touched_objects()
@@ -78,14 +77,15 @@ async fn main() -> Result<()> {
         .route("/versions/:namespace/:name", routing::get(get_version))
         .layer(Extension(reader.clone()))
         .layer(tower_http::trace::TraceLayer::new_for_http())
-        // Reminder: routes added *after* TraceLayer are not subject to its logging behavior
+        // NB: routes added after TraceLayer are not traced
         .route("/health", routing::get(health));
 
     let server = axum::Server::bind(&std::net::SocketAddr::from(([0, 0, 0, 0], 8000)))
         .serve(app.into_make_service())
         .with_graceful_shutdown(elegant_departure::tokio::depart().on_ctrl_c());
 
-    // watch stays up forever, so only wait for one of these to finish
+    // poll both axum server and kube watch to keep them moving forward
+    // axum will always exit gracefully first, because watch runs forever
     tokio::select! {
         _ = watch => warn!("watch exited"),
        _ = server => info!("axum exited"),
