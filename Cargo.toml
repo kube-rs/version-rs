@@ -13,7 +13,7 @@ path = "version.rs"
 
 [dependencies]
 axum = "0.6.10"
-axum-extra = { version = "0.7.0", features = ["typed-routing"] }
+axum-extra = { version = "0.7.2", features = ["typed-routing"] }
 tower-http = { version = "0.4.0", default-features = false, features = ["trace"] }
 futures = "0.3.25"
 tokio = { version = "1.23.0", features = ["macros", "rt-multi-thread", "signal"] }
