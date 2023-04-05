@@ -16,7 +16,7 @@ cargo run
 ```
 
 ### In-Cluster
-Apply [deployment.yaml](./deployment.yaml), then `kubectl port-forward service/version 8000:8000`
+Apply [deployment.yaml](./deployment.yaml), then `kubectl port-forward service/version 8000:80`
 
 ### Api
 Once running, the app will monitor the namespace of your context, and give you simplified version info on its web interface:
