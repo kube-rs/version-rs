@@ -26,11 +26,11 @@ backoff = "0.4.0"
 k8s-openapi = { version = "0.17.0", features = ["v1_25"] }
 
 [dependencies.kube]
-version = "0.80.0"
+version = "0.81.0"
 features = ["runtime", "client", "rustls-tls"]
 default-features = false
 
 # local testing: ignore
-git = "https://github.com/kube-rs/kube.git"
-rev = "9cdc8766863c1947b06e73eaf5604c4534975410"
+#git = "https://github.com/kube-rs/kube.git"
+#rev = "9cdc8766863c1947b06e73eaf5604c4534975410"
 #path = "../kube-rs/kube"
