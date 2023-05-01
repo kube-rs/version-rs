@@ -21,7 +21,7 @@ elegant-departure = { version = "0.2.1", features = ["tokio"] }
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
 anyhow = "1.0.70"
-serde = { version = "1.0.154", features = ["derive"] }
+serde = { version = "1.0.160", features = ["derive"] }
 backoff = "0.4.0"
 k8s-openapi = { version = "0.18.0", features = ["v1_25"] }
 
