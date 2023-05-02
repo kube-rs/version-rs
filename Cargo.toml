@@ -19,7 +19,7 @@ futures = "0.3.28"
 tokio = { version = "1.28.0", features = ["macros", "rt-multi-thread", "signal"] }
 elegant-departure = { version = "0.2.1", features = ["tokio"] }
 tracing = "0.1.37"
-tracing-subscriber = "0.3.16"
+tracing-subscriber = "0.3.17"
 anyhow = "1.0.70"
 serde = { version = "1.0.160", features = ["derive"] }
 backoff = "0.4.0"
