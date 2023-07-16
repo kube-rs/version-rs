@@ -64,7 +64,7 @@ async fn main() -> Result<()> {
 
     let (reader, writer) = reflector::store();
     let watch = reflector(writer, watcher(api, Default::default()))
-        .backoff(backoff::ExponentialBackoff::default())
+        .default_backoff()
         .touched_objects()
         .filter_map(|x| async move { Result::ok(x) })
         .for_each(|o| {
