@@ -42,7 +42,7 @@ jobs:
           cache-to: type=gha,scope=version6,mode=max
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: ${{ steps.meta.outputs.tags }}
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
 
   lint:
     runs-on: ubuntu-latest
