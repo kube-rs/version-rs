@@ -24,6 +24,7 @@ jobs:
           tags: |
             type=pep440,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=pr
 
       - name: Docker login on main origin
         uses: docker/login-action@v2
