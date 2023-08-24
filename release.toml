@@ -1,15 +1,17 @@
-# Release process :: cargo-release >= 0.23
+# Release process
 #
-# Dependencies: https://kube.rs/tools
-#
-# 1. cargo release minor --execute
+# Bump version in Cargo.toml, deployment.yaml, and create a corresponding git tag for it
+# Once pushed, CI makes a docker image for the same version
 
-# Reference
-# https://github.com/sunng87/cargo-release/blob/master/docs/reference.md
-
+pre-release-replacements = [
+  {file="deployment", search="clux/version:.*", replace="clux/version:{{version}}"},
+]
 pre-release-commit-message = "release {{version}}"
 push = false
 tag = true
 tag-name = "{{version}}"
-sign-commit = true
 sign-tag = true
+sign-commit = true
+enable-all-features = true
+
+# Ref: https://github.com/crate-ci/cargo-release/blob/master/docs/reference.md
