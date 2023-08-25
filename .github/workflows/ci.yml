@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - '*'
 
 env:
   REGISTRY_IMAGE: ghcr.io/kube-rs/version-rs
