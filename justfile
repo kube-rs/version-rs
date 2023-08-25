@@ -12,8 +12,4 @@ fmt:
   cargo +nightly fmt
 
 build:
-   DOCKER_BUILDKIT=1 docker build -t clux/version:{{VERSION}} .
-
-# mode: makefile
-# End:
-# vim: set ft=make :
+  docker build -t clux/version:{{VERSION}} .

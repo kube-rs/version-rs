@@ -3,13 +3,13 @@
 [![docker image](https://img.shields.io/docker/pulls/clux/version.svg)](
 https://hub.docker.com/r/clux/version/tags/)
 
-An example kube deployment [reflector](https://docs.rs/kube/latest/kube/runtime/reflector/fn.reflector.html), [watcher stream](https://docs.rs/kube/latest/kube/runtime/trait.WatchStreamExt.html), and [axum](https://github.com/tokio-rs/axum) web server in <100 lines of rust . It exposes a simple version api for deployments on `/versions`.
+An example kube deployment [reflector](https://docs.rs/kube/latest/kube/runtime/reflector/fn.reflector.html), [watcher stream](https://docs.rs/kube/latest/kube/runtime/trait.WatchStreamExt.html), and [axum](https://github.com/tokio-rs/axum) web server in [<100 lines of rust](./version.rs). It exposes a simple version api for deployments on `/versions`.
 
 ## Usage
 Clone the repo and either run locally or deploy into a cluster:
 
 ### Locally
-Run against your current kubernetes context:
+Run against your current Kubernetes context:
 
 ```sh
 cargo run
@@ -32,9 +32,4 @@ $ curl 0.0.0.0:8000/versions/default/foo-controller
 ## Developing
 - Locally against a cluster: `cargo run`
 - In-cluster: edit and `tilt up` [*](https://tilt.dev/)
-
-To build the image directly, run:
-
-```sh
-DOCKER_BUILDKIT=1 docker build -t clux/version .
-```
+- Docker build: `just build`
