@@ -8,9 +8,6 @@ on:
     tags:
       - '*'
 
-env:
-  REGISTRY_IMAGE: ghcr.io/kube-rs/version-rs
-
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -36,7 +33,7 @@ jobs:
         uses: docker/metadata-action@v4
         id: meta
         with:
-          images: ghcr.io/kube-rs/version-rs
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=pep440,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
@@ -55,8 +52,10 @@ jobs:
         with:
           context: .
           # official experimental: https://docs.docker.com/build/ci/github-actions/cache/#github-cache
-          cache-from: type=gha,scope=version6
-          cache-to: type=gha,scope=version6,mode=max
+          #cache-from: type=gha
+          #cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:latest
+          cache-to: type=inline
           #push: ${{ github.ref == 'refs/heads/main' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
