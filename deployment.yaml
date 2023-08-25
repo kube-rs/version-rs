@@ -78,7 +78,7 @@ spec:
       serviceAccountName: version
       containers:
       - name: version
-        image: ghcr.io/kube-rs/version-rs:1.16.1
+        image: ghcr.io/kube-rs/version-rs:1.16.2
         imagePullPolicy: IfNotPresent
         resources:
           limits:
