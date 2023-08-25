@@ -79,7 +79,7 @@ spec:
       containers:
       - name: version
         image: ghcr.io/kube-rs/version-rs:1.16.1
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           limits:
             cpu: 100m

@@ -1,6 +1,3 @@
-
-VERSION := `git rev-parse HEAD`
-
 [private]
 default:
   @just --list --unsorted
@@ -12,4 +9,14 @@ fmt:
   cargo +nightly fmt
 
 build:
-  docker build -t clux/version:{{VERSION}} .
+  docker build -t ghcr.io/kube-rs/version-rs:local .
+
+[private]
+release:
+  cargo release patch --execute
+
+[private]
+import:
+  k3d image import ghcr.io/kube-rs/version-rs:local --cluster main
+  sd "image: .*" "image: ghcr.io/kube-rs/version-rs:local" deployment.yaml
+  kubectl apply -f deployment.yaml

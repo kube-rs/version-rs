@@ -1,18 +1,12 @@
-FROM rust:1.72-alpine as builder
-RUN apk add --no-cache musl-dev
+FROM clux/muslrust:stable AS builder
+COPY Cargo.* .
+COPY version.rs version.rs
+RUN --mount=type=cache,target=/volume/target \
+    --mount=type=cache,target=/root/.cargo/registry \
+    cargo build --release --bin version && \
+    mv /volume/target/x86_64-unknown-linux-musl/release/version .
 
-# Cache downloaded + built dependencies
-COPY Cargo.toml Cargo.lock /
-RUN echo 'fn main() {}' > /version.rs && \
-    cargo build --release && \
-    rm -f /version.rs
-
-# Build our code
-COPY version.rs /
-RUN cargo build --release
-
-# Runtime
 FROM cgr.dev/chainguard/static
+COPY --from=builder --chown=nonroot:nonroot /volume/version /app/
 EXPOSE 8080
-COPY --from=builder --chown=nonroot:nonroot /target/release/version /
-ENTRYPOINT ["/version"]
+ENTRYPOINT ["/app/version"]

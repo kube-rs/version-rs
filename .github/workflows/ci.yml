@@ -39,7 +39,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=pr
 
-      - name: Docker login on main origin
+      - name: Docker login
         uses: docker/login-action@v2
         #if: github.event_name != 'pull_request'
         with:
@@ -47,13 +47,10 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker buildx and push with GHA cache
+      - name: Docker build and push with cache
         uses: docker/build-push-action@v4
         with:
           context: .
-          # official experimental: https://docs.docker.com/build/ci/github-actions/cache/#github-cache
-          #cache-from: type=gha
-          #cache-to: type=gha,mode=max
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
           #push: ${{ github.ref == 'refs/heads/main' }}
