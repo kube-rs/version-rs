@@ -4,7 +4,7 @@
 # Once pushed, CI makes a docker image for the same version
 
 pre-release-replacements = [
-  {file="deployment", search=ghcr.io/kube-rs/version-rs:.*", replace=ghcr.io/kube-rs/version-rs:{{version}}"},
+  {file="deployment.yaml", search="ghcr.io/kube-rs/version-rs:.*", replace="ghcr.io/kube-rs/version-rs:{{version}}"},
 ]
 pre-release-commit-message = "release {{version}}"
 push = false
