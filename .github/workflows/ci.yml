@@ -54,8 +54,8 @@ jobs:
           # official experimental: https://docs.docker.com/build/ci/github-actions/cache/#github-cache
           #cache-from: type=gha
           #cache-to: type=gha,mode=max
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:latest
-          cache-to: type=inline
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
           #push: ${{ github.ref == 'refs/heads/main' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
