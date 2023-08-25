@@ -1574,7 +1574,6 @@ dependencies = [
  "anyhow",
  "axum",
  "axum-extra",
- "backoff",
  "elegant-departure",
  "futures",
  "k8s-openapi",
