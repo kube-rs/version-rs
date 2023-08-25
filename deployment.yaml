@@ -78,7 +78,7 @@ spec:
       serviceAccountName: version
       containers:
       - name: version
-        image: clux/version:latest
+        image: ghcr.io/kube-rs/version-rs:latest
         imagePullPolicy: Always
         resources:
           limits:

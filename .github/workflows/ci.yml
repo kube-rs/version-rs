@@ -3,6 +3,8 @@ name: ci
 on:
   pull_request:
   push:
+    branches:
+      - main
 
 env:
   REGISTRY_IMAGE: ghcr.io/kube-rs/version-rs
