@@ -7,7 +7,7 @@ pre-release-replacements = [
   {file="deployment.yaml", search="ghcr.io/kube-rs/version-rs:.*", replace="ghcr.io/kube-rs/version-rs:{{version}}"},
 ]
 pre-release-commit-message = "{{version}}"
-push = push
+push = true
 tag = true
 tag-name = "{{version}}"
 sign-tag = true
