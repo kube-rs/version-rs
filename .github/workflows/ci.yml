@@ -39,6 +39,17 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=pr
 
+      - name: Rust Build Cache for Docker
+        uses: actions/cache@v3
+        with:
+          path: rust-build-cache
+          key: ${{ runner.os }}-build-cache-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: inject rust-build-cache into docker
+        uses: overmindtech/buildkit-cache-dance/inject@main
+        with:
+          cache-source: rust-build-cache
+
       - name: Docker login
         uses: docker/login-action@v2
         #if: github.event_name != 'pull_request'
@@ -51,12 +62,21 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
+          # when not using buildkit cache
+          #cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
+          #cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
+          # when using buildkit-cache-dance
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           #push: ${{ github.ref == 'refs/heads/main' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           platforms: ${{ matrix.platform }}
+
+      - name: extract rust-build-cache from docker
+        uses: overmindtech/buildkit-cache-dance/extract@main
+        with:
+          cache-source: rust-build-cache
 
   lint:
     runs-on: ubuntu-latest
