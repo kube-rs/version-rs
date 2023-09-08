@@ -22,12 +22,11 @@ tracing = "0.1.37"
 tracing-subscriber = "0.3.17"
 anyhow = "1.0.75"
 serde = { version = "1.0.186", features = ["derive"] }
-k8s-openapi = { version = "0.19.0", default-features = false, features = ["v1_25"] }
+k8s-openapi = { version = "0.20.0", features = ["latest"] }
 
 [dependencies.kube]
-version = "0.85.0"
-features = ["runtime", "client", "rustls-tls"]
-default-features = false
+version = "0.86.0"
+features = ["runtime"]
 
 # local testing: ignore
 #git = "https://github.com/kube-rs/kube.git"
