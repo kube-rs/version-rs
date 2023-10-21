@@ -54,7 +54,7 @@ jobs:
           cache-source: rust-build-cache
 
       - name: Docker login
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         #if: github.event_name != 'pull_request'
         with:
           registry: ghcr.io
