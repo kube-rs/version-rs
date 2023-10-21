@@ -33,7 +33,7 @@ jobs:
           config: .github/buildkitd.toml
 
       - name: Configure tags based on git tags + latest
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         id: meta
         with:
           images: ghcr.io/${{ github.repository }}
