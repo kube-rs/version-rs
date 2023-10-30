@@ -15,7 +15,7 @@ path = "version.rs"
 axum = "0.6.20"
 axum-extra = { version = "0.8.0", features = ["typed-routing"] }
 tower-http = { version = "0.4.4", default-features = false, features = ["trace"] }
-futures = "0.3.28"
+futures = "0.3.29"
 tokio = { version = "1.33.0", features = ["macros", "rt-multi-thread", "signal"] }
 elegant-departure = { version = "0.2.1", features = ["tokio"] }
 tracing = "0.1.40"
