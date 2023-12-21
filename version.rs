@@ -1,4 +1,5 @@
-use axum::{extract::Extension, http::StatusCode, response::IntoResponse, routing, Json, Router};
+use anyhow::Result;
+use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Json, Router};
 use axum_extra::routing::TypedPath;
 use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
@@ -6,8 +7,7 @@ use kube::{
     runtime::{reflector, watcher, WatchStreamExt},
     Api, Client, ResourceExt,
 };
-use tracing::*;
-type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
+use tracing::{debug, info, instrument, warn, Level};
 
 #[derive(serde::Serialize, Clone)]
 struct Entry {
@@ -16,6 +16,7 @@ struct Entry {
     namespace: String,
     version: String,
 }
+
 fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
     let name = d.name_any();
     let namespace = d.namespace()?;
@@ -31,7 +32,7 @@ fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
 }
 
 #[instrument(skip(store))]
-async fn get_versions(store: Extension<reflector::Store<Deployment>>) -> Json<Vec<Entry>> {
+async fn get_versions(State(store): State<reflector::Store<Deployment>>) -> Json<Vec<Entry>> {
     let data = store.state().iter().filter_map(|d| deployment_to_entry(d)).collect();
     Json(data)
 }
@@ -44,7 +45,10 @@ struct EntryPath {
 }
 
 #[instrument(skip(store))]
-async fn get_version(store: Extension<reflector::Store<Deployment>>, path: EntryPath) -> impl IntoResponse {
+async fn get_version(
+    State(store): State<reflector::Store<Deployment>>,
+    path: EntryPath,
+) -> impl IntoResponse {
     let key = reflector::ObjectRef::new(&path.name).within(&path.namespace);
     if let Some(Some(e)) = store.get(&key).map(|d| deployment_to_entry(&d)) {
         return Ok(Json(e));
@@ -75,7 +79,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/versions", routing::get(get_versions))
         .route("/versions/:namespace/:name", routing::get(get_version))
-        .layer(Extension(reader.clone()))
+        .with_state(reader)
         .layer(tower_http::trace::TraceLayer::new_for_http())
         // NB: routes added after TraceLayer are not traced
         .route("/health", routing::get(health));
