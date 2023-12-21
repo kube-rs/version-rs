@@ -45,7 +45,10 @@ struct EntryPath {
 }
 
 #[instrument(skip(store))]
-async fn get_version(State(store): State<reflector::Store<Deployment>>, path: EntryPath) -> impl IntoResponse {
+async fn get_version(
+    State(store): State<reflector::Store<Deployment>>,
+    path: EntryPath,
+) -> impl IntoResponse {
     let key = reflector::ObjectRef::new(&path.name).within(&path.namespace);
     if let Some(Some(e)) = store.get(&key).map(|d| deployment_to_entry(&d)) {
         return Ok(Json(e));
