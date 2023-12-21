@@ -16,6 +16,7 @@ struct Entry {
     namespace: String,
     version: String,
 }
+type Cache = reflector::Store<Deployment>;
 
 fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
     let name = d.name_any();
@@ -32,7 +33,7 @@ fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
 }
 
 #[instrument(skip(store))]
-async fn get_versions(State(store): State<reflector::Store<Deployment>>) -> Json<Vec<Entry>> {
+async fn get_versions(State(store): State<Cache>) -> Json<Vec<Entry>> {
     let data = store.state().iter().filter_map(|d| deployment_to_entry(d)).collect();
     Json(data)
 }
@@ -45,10 +46,7 @@ struct EntryPath {
 }
 
 #[instrument(skip(store))]
-async fn get_version(
-    State(store): State<reflector::Store<Deployment>>,
-    path: EntryPath,
-) -> impl IntoResponse {
+async fn get_version(State(store): State<Cache>, path: EntryPath) -> impl IntoResponse {
     let key = reflector::ObjectRef::new(&path.name).within(&path.namespace);
     if let Some(Some(e)) = store.get(&key).map(|d| deployment_to_entry(&d)) {
         return Ok(Json(e));
