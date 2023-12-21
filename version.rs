@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Json, Router};
 use axum_extra::routing::TypedPath;
 use futures::{future, StreamExt};
@@ -25,8 +24,8 @@ fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
     let img = tpl.containers.get(0)?.image.as_ref()?;
     let splits = img.splitn(2, ':').collect::<Vec<_>>();
     let (container, version) = match *splits.as_slice() {
-        [c, v] => (c.to_string(), v.to_string()),
-        [c] => (c.to_string(), "latest".to_string()),
+        [c, v] => (c.to_owned(), v.to_owned()),
+        [c] => (c.to_owned(), "latest".to_owned()),
         _ => return None,
     };
     Some(Entry { name, namespace, container, version })
@@ -59,7 +58,7 @@ async fn health() -> impl IntoResponse {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt().with_max_level(Level::DEBUG).init();
     let client = Client::try_default().await?;
     let api: Api<Deployment> = Api::all(client);
