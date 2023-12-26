@@ -3,7 +3,7 @@ default:
   @just --list --unsorted
 
 run:
-  RUST_LOG=info,kube=debug,version=debug cargo run
+  RUST_LOG=debug,hyper=info,rustls=info cargo run
 
 fmt:
   cargo +nightly fmt

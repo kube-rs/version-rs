@@ -1,12 +1,10 @@
-use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Json, Router};
-use axum_extra::routing::TypedPath;
+use axum::extract::{Path, State};
+use axum::{http::StatusCode, response::IntoResponse, routing, Json, Router};
 use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
-use kube::{
-    runtime::{reflector, watcher, WatchStreamExt},
-    Api, Client, ResourceExt,
-};
-use tracing::{debug, info, instrument, warn, Level};
+use kube::runtime::{reflector, watcher, WatchStreamExt};
+use kube::{Api, Client, ResourceExt};
+use tracing::{debug, info, warn};
 
 #[derive(serde::Serialize, Clone)]
 struct Entry {
@@ -31,35 +29,29 @@ fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
     Some(Entry { name, namespace, container, version })
 }
 
-#[instrument(skip(store))]
-async fn get_versions(State(store): State<Cache>) -> Json<Vec<Entry>> {
-    let data = store.state().iter().filter_map(|d| deployment_to_entry(d)).collect();
-    Json(data)
-}
-
-#[derive(TypedPath, serde::Deserialize, Debug)]
-#[typed_path("/versions/:namespace/:name")]
+// - GET /versions/:namespace/:name
+#[derive(serde::Deserialize, Debug)]
 struct EntryPath {
     name: String,
     namespace: String,
 }
-
-#[instrument(skip(store))]
-async fn get_version(State(store): State<Cache>, path: EntryPath) -> impl IntoResponse {
-    let key = reflector::ObjectRef::new(&path.name).within(&path.namespace);
+async fn get_version(State(store): State<Cache>, Path(p): Path<EntryPath>) -> impl IntoResponse {
+    let key = reflector::ObjectRef::new(&p.name).within(&p.namespace);
     if let Some(Some(e)) = store.get(&key).map(|d| deployment_to_entry(&d)) {
         return Ok(Json(e));
     }
     Err((StatusCode::NOT_FOUND, "not found"))
 }
 
-async fn health() -> impl IntoResponse {
-    Json("healthy")
+// - GET /versions
+async fn get_versions(State(store): State<Cache>) -> Json<Vec<Entry>> {
+    let data = store.state().iter().filter_map(|d| deployment_to_entry(d)).collect();
+    Json(data)
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt().with_max_level(Level::DEBUG).init();
+    tracing_subscriber::fmt::init();
     let client = Client::try_default().await?;
     let api: Api<Deployment> = Api::all(client);
 
@@ -67,19 +59,20 @@ async fn main() -> anyhow::Result<()> {
     let watch = reflector(writer, watcher(api, Default::default()))
         .default_backoff()
         .touched_objects()
-        .filter_map(|x| async move { Result::ok(x) })
-        .for_each(|o| {
-            debug!("Saw {} in {}", o.name_any(), o.namespace().unwrap());
-            future::ready(())
+        .for_each(|r| {
+            future::ready(match r {
+                Ok(o) => debug!("Saw {} in {}", o.name_any(), o.namespace().unwrap()),
+                Err(e) => warn!("watcher error: {e}"),
+            })
         });
 
     let app = Router::new()
         .route("/versions", routing::get(get_versions))
         .route("/versions/:namespace/:name", routing::get(get_version))
-        .with_state(reader)
+        .with_state(reader) // routes can read from the reflector store
         .layer(tower_http::trace::TraceLayer::new_for_http())
         // NB: routes added after TraceLayer are not traced
-        .route("/health", routing::get(health));
+        .route("/health", routing::get(|| async { "up" }));
 
     let server = axum::Server::bind(&std::net::SocketAddr::from(([0, 0, 0, 0], 8000)))
         .serve(app.into_make_service())

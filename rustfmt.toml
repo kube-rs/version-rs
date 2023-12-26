@@ -1,6 +1,5 @@
 overflow_delimited_expr = true
 newline_style = "Unix"
-imports_granularity = "Crate"
 reorder_impl_items = true
 blank_lines_upper_bound = 2
 comment_width = 110
