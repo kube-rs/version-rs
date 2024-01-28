@@ -4,6 +4,7 @@ use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::runtime::{reflector, watcher, WatchStreamExt};
 use kube::{Api, Client, ResourceExt};
+use miette::{IntoDiagnostic, Result};
 use tracing::{debug, info, warn};
 
 #[derive(serde::Serialize, Clone)]
@@ -50,19 +51,20 @@ async fn get_versions(State(store): State<Cache>) -> Json<Vec<Entry>> {
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
-    let client = Client::try_default().await?;
+    let client = Client::try_default().await.into_diagnostic()?;
     let api: Api<Deployment> = Api::all(client);
 
     let (reader, writer) = reflector::store();
     let watch = reflector(writer, watcher(api, Default::default()))
         .default_backoff()
         .touched_objects()
+        .map(|x| x.into_diagnostic())
         .for_each(|r| {
             future::ready(match r {
                 Ok(o) => debug!("Saw {} in {}", o.name_any(), o.namespace().unwrap()),
-                Err(e) => warn!("watcher error: {e}"),
+                Err(e) => warn!("{e:?}"),
             })
         });
 
