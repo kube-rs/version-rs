@@ -24,7 +24,7 @@ serde = { version = "1.0.196", features = ["derive"] }
 k8s-openapi = { version = "0.21.0", features = ["latest"] }
 
 [dependencies.kube]
-version = "0.88.0"
+version = "0.88.1"
 features = ["runtime"]
 
 # local testing: ignore
