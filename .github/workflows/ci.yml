@@ -43,7 +43,7 @@ jobs:
             type=ref,event=pr
 
       - name: Rust Build Cache for Docker
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: rust-build-cache
           key: ${{ runner.os }}-build-cache-${{ hashFiles('**/Cargo.toml') }}
