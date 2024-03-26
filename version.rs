@@ -4,7 +4,7 @@ use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::runtime::{reflector, watcher, WatchStreamExt};
 use kube::{Api, Client, ResourceExt};
-use tracing::{debug, info, warn};
+use tracing::{debug, warn};
 
 #[derive(serde::Serialize, Clone)]
 struct Entry {
@@ -65,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
                 Err(e) => warn!("watcher error: {e}"),
             })
         });
-    tokio::spawn(async move { watch.await }); // poll forever
+    tokio::spawn(watch); // poll forever
 
     let app = Router::new()
         .route("/versions", routing::get(get_versions))
