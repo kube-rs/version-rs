@@ -4,7 +4,7 @@ use futures::{future, StreamExt};
 use k8s_openapi::api::apps::v1::Deployment;
 use kube::runtime::{reflector, watcher, WatchStreamExt};
 use kube::{Api, Client, ResourceExt};
-use tracing::{debug, info, warn};
+use tracing::{debug, warn};
 
 #[derive(serde::Serialize, Clone)]
 struct Entry {
@@ -65,6 +65,7 @@ async fn main() -> anyhow::Result<()> {
                 Err(e) => warn!("watcher error: {e}"),
             })
         });
+    tokio::spawn(watch); // poll forever
 
     let app = Router::new()
         .route("/versions", routing::get(get_versions))
@@ -74,15 +75,8 @@ async fn main() -> anyhow::Result<()> {
         // NB: routes added after TraceLayer are not traced
         .route("/health", routing::get(|| async { "up" }));
 
-    let server = axum::Server::bind(&std::net::SocketAddr::from(([0, 0, 0, 0], 8000)))
-        .serve(app.into_make_service())
-        .with_graceful_shutdown(elegant_departure::tokio::depart().on_ctrl_c());
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await?;
+    axum::serve(listener, app.into_make_service()).await?;
 
-    // poll both axum server and kube watch to keep them moving forward
-    // axum will always exit gracefully first, because watch runs forever
-    tokio::select! {
-        _ = watch => warn!("watch exited"),
-       _ = server => info!("axum exited"),
-    };
     Ok(())
 }
