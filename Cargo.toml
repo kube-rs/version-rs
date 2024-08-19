@@ -15,11 +15,11 @@ path = "version.rs"
 axum = "0.7.5"
 tower-http = { version = "0.5.2", default-features = false, features = ["trace"] }
 futures = "0.3.30"
-tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.39.3", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 anyhow = "1.0.86"
-serde = { version = "1.0.207", features = ["derive"] }
+serde = { version = "1.0.208", features = ["derive"] }
 k8s-openapi = { version = "0.22.0", features = ["latest"] }
 
 [dependencies.kube]
