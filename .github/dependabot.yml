@@ -28,6 +28,7 @@ updates:
         patterns:
           - kube
           - k8s-openapi
+          - schemars
       core:
         patterns:
           - serde
@@ -43,7 +44,6 @@ updates:
           - heck
           - tokio
           - typed-builder
-          - schemars
       rest:
         patterns:
           - .*
