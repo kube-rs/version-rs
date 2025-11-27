@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/versions", routing::get(get_versions))
-        .route("/versions/:namespace/:name", routing::get(get_version))
+        .route("/versions/{namespace}/{name}", routing::get(get_version))
         .with_state(reader) // routes can read from the reflector store
         .layer(tower_http::trace::TraceLayer::new_for_http())
         // NB: routes added after TraceLayer are not traced
