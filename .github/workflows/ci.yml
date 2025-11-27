@@ -48,6 +48,8 @@ jobs:
         with:
           path: rust-build-cache
           key: ${{ runner.os }}-build-cache-${{ hashFiles('**/Cargo.toml') }}
+      - name: Create folders on cache miss
+        run: mkdir -p ~/.cargo/{git,registry}
 
       - name: Inject cache into docker
         uses: reproducible-containers/buildkit-cache-dance@v3
@@ -81,7 +83,6 @@ jobs:
           push: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags') }}
           tags: ${{ steps.meta.outputs.tags }}
           platforms: ${{ matrix.platform }}
-          sbom: true
 
   lint:
     runs-on: ubuntu-latest
