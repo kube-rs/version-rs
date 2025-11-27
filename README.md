@@ -34,4 +34,4 @@ $ curl 0.0.0.0:8000/versions/default/foo-controller
 - In-cluster: edit and `tilt up` [*](https://tilt.dev/)
 - Docker build: `just build`
 
-NB: images + docker dev is `linux/amd64` only atm.
+NB: pushed images are `linux/amd64` only atm.
