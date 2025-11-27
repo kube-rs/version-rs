@@ -49,7 +49,7 @@ jobs:
           path: rust-build-cache
           key: ${{ runner.os }}-build-cache-${{ hashFiles('**/Cargo.toml') }}
       - name: Create folders on cache miss
-        run: mkdir -p ~/.cargo/{git,registry}
+        run: mkdir -p ~/.cargo/{git,registry} && mkdir -p target
 
       - name: Inject cache into docker
         uses: reproducible-containers/buildkit-cache-dance@v3
