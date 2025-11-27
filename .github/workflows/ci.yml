@@ -22,16 +22,6 @@ jobs:
           #- linux/arm64
     steps:
       - uses: actions/checkout@v5
-      - name: Rust Build Cache for Docker
-        uses: actions/cache@v4
-        id: cache
-        with:
-          path: rust-build-cache
-          key: ${{ runner.os }}-build-cache2-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: "${{ runner.os}}-build-cache2"
-      - name: Create folders on cache miss
-        run: mkdir -p ~/.cargo/{git,registry} && mkdir -p target
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -41,15 +31,19 @@ jobs:
         with:
           buildkitd-config: .github/buildkitd.toml
 
-      - name: Configure tags based on git tags + latest
-        uses: docker/metadata-action@v5
-        id: meta
+      - name: Rust Build Cache for Docker
+        uses: actions/cache@v4
+        id: cache
         with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=pep440,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=pr
+          path: |
+            target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-build-cache2-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os}}-build-cache2
+      - name: Create folders on cache miss
+        run: mkdir -p ~/.cargo/{git,registry} && mkdir -p target
 
       - name: Inject cache into docker
         uses: reproducible-containers/buildkit-cache-dance@v3
@@ -61,6 +55,16 @@ jobs:
               "~/.cargo/git": "/root/.cargo/git"
             }
           # skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+
+      - name: Configure tags based on git tags + latest
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=pep440,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=pr
 
       - name: Docker login
         uses: docker/login-action@v3
