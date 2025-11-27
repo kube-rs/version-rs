@@ -50,7 +50,6 @@ jobs:
           key: ${{ runner.os }}-build-cache-${{ hashFiles('**/Cargo.toml') }}
       - name: Create folders on cache miss
         run: mkdir -p ~/.cargo/{git,registry}
-      - run: which cargo
 
       - name: Inject cache into docker
         uses: reproducible-containers/buildkit-cache-dance@v3
@@ -58,10 +57,10 @@ jobs:
           cache-map: |
             {
               "target": "/volume/target",
-              "/.cargo/registry": "/root/.cargo/registry",
-              "/.cargo/git": "/root/.cargo/git"
+              "/home/runner/.cargo/registry": "/root/.cargo/registry",
+              "/home/runner/.cargo/git": "/root/.cargo/git"
             }
-          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+          # skip-extraction: ${{ steps.cache.outputs.cache-hit }}
 
       - name: Docker login
         uses: docker/login-action@v3
