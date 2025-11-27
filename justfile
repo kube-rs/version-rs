@@ -17,6 +17,6 @@ release:
 
 [private]
 import:
-  k3d image import ghcr.io/kube-rs/version-rs:local --cluster main
+  k3d image import ghcr.io/kube-rs/version-rs:local -c=$(k3d cluster list -ojson |jq '.[0].name' -r)
   sd "image: .*" "image: ghcr.io/kube-rs/version-rs:local" deployment.yaml
   kubectl apply -f deployment.yaml
