@@ -32,7 +32,7 @@ jobs:
           buildkitd-config: .github/buildkitd.toml
 
       - name: Rust Build Cache for Docker
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache
         with:
           path: |
