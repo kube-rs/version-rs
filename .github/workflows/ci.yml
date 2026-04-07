@@ -57,7 +57,7 @@ jobs:
           # skip-extraction: ${{ steps.cache.outputs.cache-hit }}
 
       - name: Configure tags based on git tags + latest
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         id: meta
         with:
           images: ghcr.io/${{ github.repository }}
