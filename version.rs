@@ -18,7 +18,7 @@ type Cache = reflector::Store<Deployment>;
 fn deployment_to_entry(d: &Deployment) -> Option<Entry> {
     let name = d.name_any();
     let namespace = d.namespace()?;
-    let tpl = d.spec.as_ref()?.template.spec.as_ref()?;
+    let tpl = d.spec.template.spec.as_ref()?;
     let img = tpl.containers.get(0)?.image.as_ref()?;
     let splits = img.splitn(2, ':').collect::<Vec<_>>();
     let (container, version) = match *splits.as_slice() {
